@@ -1,0 +1,580 @@
+[
+  {
+    "timestamp": "2026-05-20 23:45:19",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-05-20 23:45:19",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "PRECAUCIÓN",
+    "es_anomalia": false,
+    "gases_criticos": [
+      {
+        "gas": "CH4",
+        "nombre": "Metano",
+        "valor": 1.15,
+        "unidad": "% v/v",
+        "nivel": "PRECAUCIÓN",
+        "descripcion": "Gas inflamable/explosivo (LEL 5%, UEL 15%). Principal causa de explosiones en minas de carbón.",
+        "articulo": "Art. 118-121 Decreto 1886/2015: suspender actividades >1.5%. LEL reportado MSHA >1%."
+      }
+    ],
+    "acciones": [
+      "Notificar al jefe de turno inmediatamente",
+      "Incrementar frecuencia de monitoreo a cada 15 minutos",
+      "Verificar sistema de ventilación activo y funcional",
+      "Preparar equipos de protección respiratoria (auto-rescatadores)",
+      "Restringir acceso a personal no esencial al área"
+    ]
+  },
+  {
+    "timestamp": "2026-05-20 23:45:19",
+    "zona": "Frente_B_Mongua",
+    "nivel": "RIESGO ALTO",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "CH4",
+        "nombre": "Metano",
+        "valor": 1.85,
+        "unidad": "% v/v",
+        "nivel": "RIESGO ALTO",
+        "descripcion": "Gas inflamable/explosivo (LEL 5%, UEL 15%). Principal causa de explosiones en minas de carbón.",
+        "articulo": "Art. 118-121 Decreto 1886/2015: suspender actividades >1.5%. LEL reportado MSHA >1%."
+      },
+      {
+        "gas": "CO",
+        "nombre": "Monóxido de Carbono",
+        "valor": 65.0,
+        "unidad": "ppm",
+        "nivel": "RIESGO ALTO",
+        "descripcion": "Gas tóxico inodoro. TLV-TWA ACGIH: 25 ppm. IDLH NIOSH: 1200 ppm. Síntomas a 50 ppm.",
+        "articulo": "Art. 123 Decreto 1886/2015. OSHA PEL: 50 ppm (8h TWA). NIOSH REL: 35 ppm."
+      },
+      {
+        "gas": "CO2",
+        "nombre": "Dióxido de Carbono",
+        "valor": 0.8,
+        "unidad": "% v/v",
+        "nivel": "PRECAUCIÓN",
+        "descripcion": "Asfixiante. >3% causa dificultad respiratoria severa. >5% pérdida de consciencia.",
+        "articulo": "Art. 119 Decreto 1886/2015. OSHA PEL: 5000 ppm (0.5%). NIOSH IDLH: 4% v/v."
+      },
+      {
+        "gas": "O2",
+        "nombre": "Oxígeno",
+        "valor": 19.8,
+        "unidad": "% v/v",
+        "nivel": "PRECAUCIÓN",
+        "descripcion": "Deficiencia: <19.5% riesgo fisiológico. <16% pérdida de consciencia. INVERTIDO: crítico si BAJO.",
+        "articulo": "Art. 118 Decreto 1886/2015: mínimo 19.5% O2. OSHA 1910.146: <19.5% espacio confinado."
+      },
+      {
+        "gas": "H2S",
+        "nombre": "Sulfuro de Hidrógeno",
+        "valor": 3.5,
+        "unidad": "ppm",
+        "nivel": "PRECAUCIÓN",
+        "descripcion": "Extremadamente tóxico. NIOSH IDLH: 50 ppm. Parálisis olfativa a 100 ppm. Letal >500 ppm.",
+        "articulo": "OSHA PEL: 20 ppm (techo). MSHA: 10 ppm TWA, 20 ppm STEL. NIOSH REL: 1 ppm."
+      }
+    ],
+    "acciones": [
+      "🚨 SUSPENDER ACTIVIDADES MINERAS INMEDIATAMENTE",
+      "Evacuar personal no esencial del frente de trabajo",
+      "Activar ventiladores de emergencia y verificar caudal",
+      "Cortar equipos eléctricos no ATEX en el área afectada",
+      "Notificar al supervisor de mina y al ingeniero responsable",
+      "Reportar evento a la ANM según Art. 120 Decreto 1886/2015",
+      "Instalar barreras de seguridad en accesos a la zona"
+    ]
+  },
+  {
+    "timestamp": "2026-05-20 23:45:19",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "EVACUACIÓN INMEDIATA",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "CH4",
+        "nombre": "Metano",
+        "valor": 5.2,
+        "unidad": "% v/v",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Gas inflamable/explosivo (LEL 5%, UEL 15%). Principal causa de explosiones en minas de carbón.",
+        "articulo": "Art. 118-121 Decreto 1886/2015: suspender actividades >1.5%. LEL reportado MSHA >1%."
+      },
+      {
+        "gas": "CO",
+        "nombre": "Monóxido de Carbono",
+        "valor": 250.0,
+        "unidad": "ppm",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Gas tóxico inodoro. TLV-TWA ACGIH: 25 ppm. IDLH NIOSH: 1200 ppm. Síntomas a 50 ppm.",
+        "articulo": "Art. 123 Decreto 1886/2015. OSHA PEL: 50 ppm (8h TWA). NIOSH REL: 35 ppm."
+      },
+      {
+        "gas": "CO2",
+        "nombre": "Dióxido de Carbono",
+        "valor": 2.1,
+        "unidad": "% v/v",
+        "nivel": "RIESGO ALTO",
+        "descripcion": "Asfixiante. >3% causa dificultad respiratoria severa. >5% pérdida de consciencia.",
+        "articulo": "Art. 119 Decreto 1886/2015. OSHA PEL: 5000 ppm (0.5%). NIOSH IDLH: 4% v/v."
+      },
+      {
+        "gas": "O2",
+        "nombre": "Oxígeno",
+        "valor": 17.5,
+        "unidad": "% v/v",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Deficiencia: <19.5% riesgo fisiológico. <16% pérdida de consciencia. INVERTIDO: crítico si BAJO.",
+        "articulo": "Art. 118 Decreto 1886/2015: mínimo 19.5% O2. OSHA 1910.146: <19.5% espacio confinado."
+      },
+      {
+        "gas": "H2S",
+        "nombre": "Sulfuro de Hidrógeno",
+        "valor": 55.0,
+        "unidad": "ppm",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Extremadamente tóxico. NIOSH IDLH: 50 ppm. Parálisis olfativa a 100 ppm. Letal >500 ppm.",
+        "articulo": "OSHA PEL: 20 ppm (techo). MSHA: 10 ppm TWA, 20 ppm STEL. NIOSH REL: 1 ppm."
+      }
+    ],
+    "acciones": [
+      "🚨🚨 EVACUACIÓN TOTAL E INMEDIATA — ACTIVAR ALARMA GENERAL",
+      "Activar señal de evacuación: 3 pitidos cortos + 1 largo",
+      "TODO el personal debe dirigirse al punto de reunión exterior",
+      "Cortar energía eléctrica general del nivel afectado (si es seguro)",
+      "Contactar servicios de emergencia: 123 — ANM: 57-1-3 199 099",
+      "Activar brigada de rescate minero y plan de contingencia",
+      "PROHIBIDO reingresar sin autorización escrita del ingeniero de minas",
+      "Verificar lista de personal en punto de reunión"
+    ]
+  },
+  {
+    "timestamp": "2026-05-20 23:45:19",
+    "zona": "Galeria_Central",
+    "nivel": "EVACUACIÓN INMEDIATA",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "CO2",
+        "nombre": "Dióxido de Carbono",
+        "valor": 3.5,
+        "unidad": "% v/v",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Asfixiante. >3% causa dificultad respiratoria severa. >5% pérdida de consciencia.",
+        "articulo": "Art. 119 Decreto 1886/2015. OSHA PEL: 5000 ppm (0.5%). NIOSH IDLH: 4% v/v."
+      },
+      {
+        "gas": "O2",
+        "nombre": "Oxígeno",
+        "valor": 17.2,
+        "unidad": "% v/v",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Deficiencia: <19.5% riesgo fisiológico. <16% pérdida de consciencia. INVERTIDO: crítico si BAJO.",
+        "articulo": "Art. 118 Decreto 1886/2015: mínimo 19.5% O2. OSHA 1910.146: <19.5% espacio confinado."
+      }
+    ],
+    "acciones": [
+      "🚨🚨 EVACUACIÓN TOTAL E INMEDIATA — ACTIVAR ALARMA GENERAL",
+      "Activar señal de evacuación: 3 pitidos cortos + 1 largo",
+      "TODO el personal debe dirigirse al punto de reunión exterior",
+      "Cortar energía eléctrica general del nivel afectado (si es seguro)",
+      "Contactar servicios de emergencia: 123 — ANM: 57-1-3 199 099",
+      "Activar brigada de rescate minero y plan de contingencia",
+      "PROHIBIDO reingresar sin autorización escrita del ingeniero de minas",
+      "Verificar lista de personal en punto de reunión"
+    ]
+  },
+  {
+    "timestamp": "2026-05-20 23:45:19",
+    "zona": "Frente_B_Mongua",
+    "nivel": "PRECAUCIÓN",
+    "es_anomalia": true,
+    "gases_criticos": [],
+    "acciones": [
+      "🔧 SENSOR DEFECTUOSO DETECTADO — Verificar calibración y funcionamiento del sensor",
+      "Notificar al jefe de turno inmediatamente",
+      "Incrementar frecuencia de monitoreo a cada 15 minutos",
+      "Verificar sistema de ventilación activo y funcional",
+      "Preparar equipos de protección respiratoria (auto-rescatadores)",
+      "Restringir acceso a personal no esencial al área"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 06:00:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "RIESGO ALTO",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "CH4",
+        "nombre": "Metano",
+        "valor": 3.558015166683408,
+        "unidad": "% v/v",
+        "nivel": "RIESGO ALTO",
+        "descripcion": "Gas inflamable/explosivo (LEL 5%, UEL 15%). Principal causa de explosiones en minas de carbón.",
+        "articulo": "Art. 118-121 Decreto 1886/2015: suspender actividades >1.5%. LEL reportado MSHA >1%."
+      },
+      {
+        "gas": "H2S",
+        "nombre": "Sulfuro de Hidrógeno",
+        "valor": 1.0282802498716612,
+        "unidad": "ppm",
+        "nivel": "PRECAUCIÓN",
+        "descripcion": "Extremadamente tóxico. NIOSH IDLH: 50 ppm. Parálisis olfativa a 100 ppm. Letal >500 ppm.",
+        "articulo": "OSHA PEL: 20 ppm (techo). MSHA: 10 ppm TWA, 20 ppm STEL. NIOSH REL: 1 ppm."
+      }
+    ],
+    "acciones": [
+      "🚨 SUSPENDER ACTIVIDADES MINERAS INMEDIATAMENTE",
+      "Evacuar personal no esencial del frente de trabajo",
+      "Activar ventiladores de emergencia y verificar caudal",
+      "Cortar equipos eléctricos no ATEX en el área afectada",
+      "Notificar al supervisor de mina y al ingeniero responsable",
+      "Reportar evento a la ANM según Art. 120 Decreto 1886/2015",
+      "Instalar barreras de seguridad en accesos a la zona"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 06:15:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "PRECAUCIÓN",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "O2",
+        "nombre": "Oxígeno",
+        "valor": 20.414213778321212,
+        "unidad": "% v/v",
+        "nivel": "PRECAUCIÓN",
+        "descripcion": "Deficiencia: <19.5% riesgo fisiológico. <16% pérdida de consciencia. INVERTIDO: crítico si BAJO.",
+        "articulo": "Art. 118 Decreto 1886/2015: mínimo 19.5% O2. OSHA 1910.146: <19.5% espacio confinado."
+      }
+    ],
+    "acciones": [
+      "🔧 SENSOR DEFECTUOSO DETECTADO — Verificar calibración y funcionamiento del sensor",
+      "Notificar al jefe de turno inmediatamente",
+      "Incrementar frecuencia de monitoreo a cada 15 minutos",
+      "Verificar sistema de ventilación activo y funcional",
+      "Preparar equipos de protección respiratoria (auto-rescatadores)",
+      "Restringir acceso a personal no esencial al área"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 06:30:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "RIESGO ALTO",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "CH4",
+        "nombre": "Metano",
+        "valor": 3.558015166683408,
+        "unidad": "% v/v",
+        "nivel": "RIESGO ALTO",
+        "descripcion": "Gas inflamable/explosivo (LEL 5%, UEL 15%). Principal causa de explosiones en minas de carbón.",
+        "articulo": "Art. 118-121 Decreto 1886/2015: suspender actividades >1.5%. LEL reportado MSHA >1%."
+      }
+    ],
+    "acciones": [
+      "🚨 SUSPENDER ACTIVIDADES MINERAS INMEDIATAMENTE",
+      "Evacuar personal no esencial del frente de trabajo",
+      "Activar ventiladores de emergencia y verificar caudal",
+      "Cortar equipos eléctricos no ATEX en el área afectada",
+      "Notificar al supervisor de mina y al ingeniero responsable",
+      "Reportar evento a la ANM según Art. 120 Decreto 1886/2015",
+      "Instalar barreras de seguridad en accesos a la zona"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 06:45:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 07:00:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 07:15:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 07:30:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 07:45:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "EVACUACIÓN INMEDIATA",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "O2",
+        "nombre": "Oxígeno",
+        "valor": 0.0,
+        "unidad": "% v/v",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Deficiencia: <19.5% riesgo fisiológico. <16% pérdida de consciencia. INVERTIDO: crítico si BAJO.",
+        "articulo": "Art. 118 Decreto 1886/2015: mínimo 19.5% O2. OSHA 1910.146: <19.5% espacio confinado."
+      }
+    ],
+    "acciones": [
+      "🔧 SENSOR DEFECTUOSO DETECTADO — Verificar calibración y funcionamiento del sensor",
+      "🚨🚨 EVACUACIÓN TOTAL E INMEDIATA — ACTIVAR ALARMA GENERAL",
+      "Activar señal de evacuación: 3 pitidos cortos + 1 largo",
+      "TODO el personal debe dirigirse al punto de reunión exterior",
+      "Cortar energía eléctrica general del nivel afectado (si es seguro)",
+      "Contactar servicios de emergencia: 123 — ANM: 57-1-3 199 099",
+      "Activar brigada de rescate minero y plan de contingencia",
+      "PROHIBIDO reingresar sin autorización escrita del ingeniero de minas",
+      "Verificar lista de personal en punto de reunión"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 08:00:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "EVACUACIÓN INMEDIATA",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "O2",
+        "nombre": "Oxígeno",
+        "valor": 0.0,
+        "unidad": "% v/v",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Deficiencia: <19.5% riesgo fisiológico. <16% pérdida de consciencia. INVERTIDO: crítico si BAJO.",
+        "articulo": "Art. 118 Decreto 1886/2015: mínimo 19.5% O2. OSHA 1910.146: <19.5% espacio confinado."
+      }
+    ],
+    "acciones": [
+      "🔧 SENSOR DEFECTUOSO DETECTADO — Verificar calibración y funcionamiento del sensor",
+      "🚨🚨 EVACUACIÓN TOTAL E INMEDIATA — ACTIVAR ALARMA GENERAL",
+      "Activar señal de evacuación: 3 pitidos cortos + 1 largo",
+      "TODO el personal debe dirigirse al punto de reunión exterior",
+      "Cortar energía eléctrica general del nivel afectado (si es seguro)",
+      "Contactar servicios de emergencia: 123 — ANM: 57-1-3 199 099",
+      "Activar brigada de rescate minero y plan de contingencia",
+      "PROHIBIDO reingresar sin autorización escrita del ingeniero de minas",
+      "Verificar lista de personal en punto de reunión"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 08:15:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "EVACUACIÓN INMEDIATA",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "O2",
+        "nombre": "Oxígeno",
+        "valor": 0.0,
+        "unidad": "% v/v",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Deficiencia: <19.5% riesgo fisiológico. <16% pérdida de consciencia. INVERTIDO: crítico si BAJO.",
+        "articulo": "Art. 118 Decreto 1886/2015: mínimo 19.5% O2. OSHA 1910.146: <19.5% espacio confinado."
+      }
+    ],
+    "acciones": [
+      "🔧 SENSOR DEFECTUOSO DETECTADO — Verificar calibración y funcionamiento del sensor",
+      "🚨🚨 EVACUACIÓN TOTAL E INMEDIATA — ACTIVAR ALARMA GENERAL",
+      "Activar señal de evacuación: 3 pitidos cortos + 1 largo",
+      "TODO el personal debe dirigirse al punto de reunión exterior",
+      "Cortar energía eléctrica general del nivel afectado (si es seguro)",
+      "Contactar servicios de emergencia: 123 — ANM: 57-1-3 199 099",
+      "Activar brigada de rescate minero y plan de contingencia",
+      "PROHIBIDO reingresar sin autorización escrita del ingeniero de minas",
+      "Verificar lista de personal en punto de reunión"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 08:30:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "EVACUACIÓN INMEDIATA",
+    "es_anomalia": true,
+    "gases_criticos": [
+      {
+        "gas": "O2",
+        "nombre": "Oxígeno",
+        "valor": 0.0,
+        "unidad": "% v/v",
+        "nivel": "EVACUACIÓN INMEDIATA",
+        "descripcion": "Deficiencia: <19.5% riesgo fisiológico. <16% pérdida de consciencia. INVERTIDO: crítico si BAJO.",
+        "articulo": "Art. 118 Decreto 1886/2015: mínimo 19.5% O2. OSHA 1910.146: <19.5% espacio confinado."
+      }
+    ],
+    "acciones": [
+      "🔧 SENSOR DEFECTUOSO DETECTADO — Verificar calibración y funcionamiento del sensor",
+      "🚨🚨 EVACUACIÓN TOTAL E INMEDIATA — ACTIVAR ALARMA GENERAL",
+      "Activar señal de evacuación: 3 pitidos cortos + 1 largo",
+      "TODO el personal debe dirigirse al punto de reunión exterior",
+      "Cortar energía eléctrica general del nivel afectado (si es seguro)",
+      "Contactar servicios de emergencia: 123 — ANM: 57-1-3 199 099",
+      "Activar brigada de rescate minero y plan de contingencia",
+      "PROHIBIDO reingresar sin autorización escrita del ingeniero de minas",
+      "Verificar lista de personal en punto de reunión"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 08:45:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 09:00:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 09:15:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "PRECAUCIÓN",
+    "es_anomalia": false,
+    "gases_criticos": [
+      {
+        "gas": "CH4",
+        "nombre": "Metano",
+        "valor": 1.055716569406662,
+        "unidad": "% v/v",
+        "nivel": "PRECAUCIÓN",
+        "descripcion": "Gas inflamable/explosivo (LEL 5%, UEL 15%). Principal causa de explosiones en minas de carbón.",
+        "articulo": "Art. 118-121 Decreto 1886/2015: suspender actividades >1.5%. LEL reportado MSHA >1%."
+      }
+    ],
+    "acciones": [
+      "Notificar al jefe de turno inmediatamente",
+      "Incrementar frecuencia de monitoreo a cada 15 minutos",
+      "Verificar sistema de ventilación activo y funcional",
+      "Preparar equipos de protección respiratoria (auto-rescatadores)",
+      "Restringir acceso a personal no esencial al área"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 09:30:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "PRECAUCIÓN",
+    "es_anomalia": false,
+    "gases_criticos": [
+      {
+        "gas": "CO",
+        "nombre": "Monóxido de Carbono",
+        "valor": 25.056590231048254,
+        "unidad": "ppm",
+        "nivel": "PRECAUCIÓN",
+        "descripcion": "Gas tóxico inodoro. TLV-TWA ACGIH: 25 ppm. IDLH NIOSH: 1200 ppm. Síntomas a 50 ppm.",
+        "articulo": "Art. 123 Decreto 1886/2015. OSHA PEL: 50 ppm (8h TWA). NIOSH REL: 35 ppm."
+      }
+    ],
+    "acciones": [
+      "Notificar al jefe de turno inmediatamente",
+      "Incrementar frecuencia de monitoreo a cada 15 minutos",
+      "Verificar sistema de ventilación activo y funcional",
+      "Preparar equipos de protección respiratoria (auto-rescatadores)",
+      "Restringir acceso a personal no esencial al área"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 09:45:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 10:00:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 10:15:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 10:30:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  },
+  {
+    "timestamp": "2026-01-16 10:45:00",
+    "zona": "Frente_A_Sogamoso",
+    "nivel": "SEGURO",
+    "es_anomalia": false,
+    "gases_criticos": [],
+    "acciones": [
+      "Continuar monitoreo rutinario",
+      "Registrar lectura en bitácora operativa"
+    ]
+  }
+]
