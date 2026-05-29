@@ -137,6 +137,9 @@ async def orquestar(req: OrquestarRequest):
     # Orquestar
     evento = motor.procesar(req.zona, resp_gases, resp_imagen, resp_geo, resp_monitor)
 
+    # Incluir lecturas crudas de gases para el dashboard en tiempo real
+    evento["datos_gases"] = req.gases
+
     # Broadcast WebSocket al dashboard
     await broadcast({"tipo": "EVENTO_GLOBAL", "datos": evento})
 

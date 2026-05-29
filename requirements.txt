@@ -1,19 +1,38 @@
+# ── Web / API ─────────────────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+httpx==0.27.0
+python-dotenv==1.0.1
+pydantic==2.7.4
+websockets>=12.0
+
+# ── IA / ML ───────────────────────────────────────────────────────────────────
+# El predictor usa inferencia NumPy pura (sin keras en runtime).
+# tensorflow y tf-keras solo se necesitan si se reentrenan modelos.
+# h5py es requerido para leer los pesos de los modelos .keras.
+tensorflow==2.15.0
+tf-keras==2.15.0
+h5py==3.11.0
+
+# Dependencias que TF 2.15 requiere en versiones específicas:
+protobuf==4.25.3
+ml-dtypes==0.2.0
+numpy==1.26.4
+
 langchain==0.2.16
 langchain-community==0.2.16
 langchain-core==0.2.38
 faiss-cpu==1.8.0
 sentence-transformers==3.0.1
 scikit-learn==1.5.1
-tensorflow==2.15.0
+pandas==2.2.2
+
+# ── Datos / Visualización ─────────────────────────────────────────────────────
 matplotlib==3.8.4
 seaborn==0.13.1
 plotly==5.23.0
-pandas==2.2.2
-numpy==1.26.4
-fastapi==0.111.0
-uvicorn==0.30.1
-pyngrok==7.1.6
+
+# ── Utilitarios ───────────────────────────────────────────────────────────────
 colorama==0.4.6
 tabulate==0.9.0
-protobuf==4.25.3
-h5py==3.11.0
+aiosqlite==0.20.0

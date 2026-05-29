@@ -6,7 +6,6 @@ Expone endpoints para análisis de lecturas, predicción y consulta RAG.
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
-import pandas as pd
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +18,7 @@ from backend.agentes.gases.umbrales import clasificar_gas, UMBRALES_GAS
 from backend.agentes.gases.anomaly_detector import AnomalyDetector
 from backend.agentes.gases.predictor import PredictorLSTMGases
 from backend.rag.rag_engine import rag
+from backend.shared.database import inicializar_db, cargar_historial, guardar_lectura
 
 log = get_logger("agente_gases")
 
@@ -33,6 +33,13 @@ FEATURES  = ["CH4", "CO", "CO2", "O2", "H2S"]
 async def lifespan(app: FastAPI):
     """Inicialización y apagado del agente."""
     log.info("=== Iniciando Agente de Gases ===")
+    # Persistencia SQLite
+    inicializar_db()
+    for zona in settings.zonas:
+        datos = await cargar_historial(zona, n=500)
+        if datos:
+            historial[zona] = datos
+            log.info(f"  [{zona}] {len(datos)} lecturas cargadas desde SQLite")
     detector.cargar()
     predictor.cargar()
     rag.inicializar()
@@ -122,8 +129,35 @@ async def analizar(req: LecturaGasRequest):
     predicciones_alertas = []
     if len(hist_list) >= settings.lstm_ventana:
         try:
+            
             pred = predictor.predecir(hist_list, req.zona)
-            predicciones_alertas = pred["alertas_predictivas"]
+
+            # Construir pasos completos: gases_predichos + nivel_predicho + alertas
+            crudas = pred.get("predicciones_crudas", [])
+            alertas_por_paso: dict[int, list] = {}
+            for a in pred.get("alertas_predictivas", []):
+                t = a["horizonte_min"] // settings.lstm_min_por_paso - 1
+                alertas_por_paso.setdefault(t, []).append(a["gas"])
+
+            pasos_completos = []
+            for t, fila in enumerate(crudas):
+                gases_pred = {g: round(float(max(0, fila[i])), 4)
+                              for i, g in enumerate(FEATURES)}
+                # nivel predicho para ese paso
+                nivel_paso = NivelRiesgo.SEGURO
+                for g, v in gases_pred.items():
+                    nv = clasificar_gas(g, v)
+                    if NIVEL_ORDEN[nv] > NIVEL_ORDEN[nivel_paso]:
+                        nivel_paso = nv
+                pasos_completos.append({
+                    "paso":          t + 1,
+                    "horizonte_min": (t + 1) * settings.lstm_min_por_paso,
+                    "gases_predichos": gases_pred,
+                    "nivel_predicho":  nivel_paso.value,
+                    "alertas":         alertas_por_paso.get(t, []),
+                })
+
+            predicciones_alertas = pasos_completos
         except Exception as e:
             log.warning(f"Predicción fallida para {req.zona}: {e}")
 
@@ -150,10 +184,11 @@ async def analizar(req: LecturaGasRequest):
     if anomalia.get("tipo_anomalia") == "falla_sensor":
         acciones = ["🔧 VERIFICAR SENSOR DEFECTUOSO"] + acciones
 
-    # 6) Guardar en historial (máx 500 por zona)
+    # 6) Guardar en historial (máx 500 por zona) y persistir en SQLite
     hist_list.append(lectura)
     if len(hist_list) > 500:
         hist_list.pop(0)
+    await guardar_lectura(req.zona, lectura)
 
     gases_str = "; ".join(f"{g['gas']}={g['valor']:.3f}{g['unidad']}" for g in gases_criticos)
     explicacion = (
@@ -182,3 +217,47 @@ async def obtener_historial(zona: str, n: int = 50):
     if zona not in historial:
         raise HTTPException(404, f"Zona {zona} no encontrada")
     return {"zona": zona, "lecturas": historial[zona][-n:]}
+
+
+@app.get("/predictor/status")
+async def predictor_status():
+    """Diagnóstico del predictor LSTM: modelos cargados, scalers, modo, rutas."""
+    try:
+        modelos_dir = settings.model_paths.lstm_gases_dir
+        scaler_path = settings.model_paths.lstm_scalers_gases
+
+        modelos_en_disco = {}
+        for zona in settings.zonas:
+            nombre = "lstm_gases_{}.keras".format(zona)
+            ruta = modelos_dir / nombre
+            modelos_en_disco[zona] = str(ruta) if ruta.exists() else "NO ENCONTRADO: {}".format(ruta)
+
+        # Detectar backends disponibles
+        backends = {}
+        for pkg in ["tensorflow", "tf_keras", "keras"]:
+            try:
+                mod = __import__(pkg)
+                backends[pkg] = getattr(mod, "__version__", "instalado")
+            except Exception as e:
+                backends[pkg] = "ERROR: {}".format(str(e)[:120])
+
+        return {
+            "predictor": {
+                "cargado":        getattr(predictor, "_cargado",       False),
+                "modo_fallback":  getattr(predictor, "_modo_fallback", True),
+                "modelos_en_ram": list(getattr(predictor, "_modelos", {}).keys()),
+                "scalers_en_ram": list(getattr(predictor, "_scalers", {}).keys()),
+                "errores_carga":  getattr(predictor, "_errores_carga", {}),
+            },
+            "rutas": {
+                "lstm_gases_dir":    str(modelos_dir),
+                "lstm_gases_existe": modelos_dir.exists(),
+                "scaler_path":       str(scaler_path),
+                "scaler_existe":     scaler_path.exists(),
+            },
+            "modelos_en_disco": modelos_en_disco,
+            "backends_python":  backends,
+            "historial_lecturas": {z: len(h) for z, h in historial.items()},
+        }
+    except Exception as e:
+        return {"error": str(e), "tipo": type(e).__name__}

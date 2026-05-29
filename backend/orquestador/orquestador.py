@@ -229,6 +229,7 @@ class Orquestador:
             "correlaciones":      [r["descripcion"] for r in reglas_disparadas],
             "acciones_globales":  acciones_globales[:8],
             "normativa":          normativa,
+            "gases_criticos":     resp_gases.get("gases_criticos", []) if resp_gases else [],
             "scores_agentes":     scores,
             "prediccion":         pred_msg,
             "explicacion":        explicacion,

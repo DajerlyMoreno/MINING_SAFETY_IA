@@ -1,21 +1,18 @@
 """
-anomaly_detector.py — Detector de anomalías para el Agente de Gases.
-Encapsula la carga del IsolationForest exportado desde Colab y
-provee métodos de detección con explicaciones detalladas.
+anomaly_detector.py - Detector de anomalias para el Agente de Gases.
+Encapsula la carga del IsolationForest exportado desde Colab.
+Opera en modo fallback (deteccion por reglas) si el modelo no esta disponible.
 """
 
 from __future__ import annotations
 
 import pickle
-from pathlib import Path
+import warnings
 from typing import Optional
 
 import numpy as np
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
 
 from backend.shared.config import settings
-from backend.shared.exceptions import ModeloNoEncontrado, ZonaNoSoportada
 from backend.shared.logger import get_logger
 
 log = get_logger("anomaly_detector")
@@ -25,7 +22,7 @@ FEATURES = ["CH4", "CO", "CO2", "O2", "H2S"]
 # Umbrales de cambio brusco por gas (%)
 UMBRAL_CAMBIO_BRUSCO = {
     "CH4": 50.0,
-    "CO": 80.0,
+    "CO":  80.0,
     "H2S": 100.0,
 }
 
@@ -33,83 +30,113 @@ UMBRAL_CAMBIO_BRUSCO = {
 class AnomalyDetector:
     """
     Carga los modelos IsolationForest pre-entrenados en Colab
-    y detecta anomalías en lecturas de sensores de gases.
+    y detecta anomalias en lecturas de sensores de gases.
+    Si el modelo no esta disponible, opera en modo fallback
+    (solo deteccion por reglas) sin bloquear el arranque.
     """
 
     def __init__(self) -> None:
-        self._modelos:  dict[str, IsolationForest] = {}
-        self._scalers:  dict[str, StandardScaler]  = {}
+        self._modelos: dict = {}
+        self._scalers: dict = {}
         self._cargado = False
 
     def cargar(self) -> None:
-        """Carga modelos desde el archivo .pkl exportado de Colab."""
+        """
+        Carga modelos desde el archivo .pkl exportado de Colab.
+        Si el archivo no existe o tiene formato inesperado,
+        activa modo degradado (solo reglas).
+        """
         ruta = settings.model_paths.isolation_forest_gases
         if not ruta.exists():
-            raise ModeloNoEncontrado(str(ruta))
+            log.warning(
+                f"IsolationForest no encontrado en {ruta}. "
+                "Operando en modo fallback (deteccion solo por reglas)."
+            )
+            return
 
         log.info(f"Cargando IsolationForest desde {ruta}")
-        with open(ruta, "rb") as f:
-            data = pickle.load(f)
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                with open(ruta, "rb") as f:
+                    data = pickle.load(f)
 
-        self._modelos = data["modelos"]
-        self._scalers = data["scalers"]
-        self._cargado = True
+            if isinstance(data, dict) and "modelos" in data:
+                self._modelos = data["modelos"]
+                self._scalers = data.get("scalers", {})
+            elif isinstance(data, dict):
+                self._modelos = data
+                self._scalers = {}
+            else:
+                log.warning("Formato de pickle inesperado. Modo fallback activado.")
+                return
 
-        zonas = list(self._modelos.keys())
-        log.info(f"IsolationForest cargado para zonas: {zonas}")
+            self._cargado = True
+            zonas = list(self._modelos.keys())
+            log.info(f"IsolationForest cargado para zonas: {zonas}")
+
+        except Exception as e:
+            log.warning(
+                f"Error al cargar IsolationForest: {e}. "
+                "Operando en modo fallback (deteccion solo por reglas)."
+            )
 
     def detectar(
         self,
-        lectura: dict[str, float],
+        lectura: dict,
         zona: str,
-        historial: Optional[list[dict]] = None,
+        historial: Optional[list] = None,
     ) -> dict:
         """
-        Detecta si una lectura es anómala.
+        Detecta si una lectura es anomala usando IsolationForest + reglas.
 
         Args:
-            lectura:  Dict con keys CH4, CO, CO2, O2, H2S.
-            zona:     Zona minera de la lectura.
-            historial: Últimas N lecturas para detectar cambios bruscos.
+            lectura:   Dict con keys CH4, CO, CO2, O2, H2S.
+            zona:      Zona minera.
+            historial: Ultimas N lecturas para detectar cambios bruscos.
 
         Returns:
-            Dict con es_anomalia, score, tipo, razones, gases_afectados.
+            Dict con es_anomalia, score_anomalia, tipo_anomalia, razones, gases_afectados.
         """
-        if not self._cargado:
-            raise RuntimeError("Llamar a cargar() antes de detectar()")
-        if zona not in self._modelos:
-            raise ZonaNoSoportada(zona)
-
         resultado = {
-            "es_anomalia":    False,
-            "score_anomalia": 0.0,
-            "tipo_anomalia":  None,
-            "razones":        [],
+            "es_anomalia":     False,
+            "score_anomalia":  0.0,
+            "tipo_anomalia":   None,
+            "razones":         [],
             "gases_afectados": [],
         }
 
-        # 1) Isolation Forest
-        X = np.array([[lectura.get(g, 0) for g in FEATURES]])
-        Xs = self._scalers[zona].transform(X)
-        pred = self._modelos[zona].predict(Xs)[0]
-        score = float(-self._modelos[zona].score_samples(Xs)[0])
-        resultado["score_anomalia"] = round(score, 4)
+        # 1) Isolation Forest (solo si modelo disponible para esta zona)
+        if self._cargado and zona in self._modelos:
+            try:
+                X = np.array([[lectura.get(g, 0) for g in FEATURES]])
+                scaler = self._scalers.get(zona)
+                if scaler is not None:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        Xs = scaler.transform(X)
+                else:
+                    Xs = X
 
-        if pred == -1:
-            resultado["es_anomalia"] = True
-            resultado["razones"].append(
-                f"Isolation Forest: score {score:.3f} supera umbral del modelo"
-            )
+                pred  = self._modelos[zona].predict(Xs)[0]
+                score = float(-self._modelos[zona].score_samples(Xs)[0])
+                resultado["score_anomalia"] = round(score, 4)
 
-        # 2) Sensor defectuoso (valor 0 o extremo)
+                if pred == -1:
+                    resultado["es_anomalia"] = True
+                    resultado["razones"].append(
+                        f"Isolation Forest: score {score:.3f} supera umbral del modelo"
+                    )
+            except Exception as e:
+                log.debug(f"IsolationForest error para {zona}: {e}")
+
+        # 2) Sensor defectuoso (valor 0 sospechoso)
         for gas in FEATURES:
             val = lectura.get(gas, 0)
             if val == 0.0 and gas not in ("H2S",):
                 resultado["es_anomalia"] = True
                 resultado["tipo_anomalia"] = "falla_sensor"
-                resultado["razones"].append(
-                    f"Sensor {gas}: lectura cero sospechosa"
-                )
+                resultado["razones"].append(f"Sensor {gas}: lectura cero sospechosa")
                 resultado["gases_afectados"].append(gas)
 
         # 3) Incremento brusco (si hay historial)
@@ -125,7 +152,7 @@ class AnomalyDetector:
                             resultado["tipo_anomalia"] = "incremento_brusco"
                         resultado["razones"].append(
                             f"{gas}: incremento del {cambio:.0f}% "
-                            f"(media={media:.3f} → actual={lectura.get(gas,0):.3f})"
+                            f"(media={media:.3f} -> actual={lectura.get(gas,0):.3f})"
                         )
                         if gas not in resultado["gases_afectados"]:
                             resultado["gases_afectados"].append(gas)

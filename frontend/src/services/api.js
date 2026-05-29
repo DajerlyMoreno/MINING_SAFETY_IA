@@ -2,8 +2,12 @@
  * api.js — Cliente HTTP centralizado para comunicarse con el Orquestador.
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-const WS_URL   = import.meta.env.VITE_WS_URL  || "ws://localhost:8000/ws/eventos";
+const BASE_URL     = import.meta.env.VITE_API_URL     || "http://localhost:8000";
+const SIM_URL      = import.meta.env.VITE_SIM_URL     || "http://localhost:8005";
+const AGENTE_GAS   = import.meta.env.VITE_AGENTE_GAS  || "http://localhost:8001";
+export const WS_URL = import.meta.env.VITE_WS_URL     || "ws://localhost:8000/ws/eventos";
+
+const json = (r) => { if (!r.ok) throw new Error(r.statusText); return r.json(); };
 
 export const api = {
   // ── Orquestador ────────────────────────────────────────────────────────────
@@ -12,14 +16,14 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    }).then((r) => r.json()),
+    }).then(json),
 
-  obtenerEstado: () => fetch(`${BASE_URL}/estado`).then((r) => r.json()),
+  obtenerEstado: () => fetch(`${BASE_URL}/estado`).then(json),
 
   obtenerHistorial: (n = 20, zona = null) => {
-    const params = new URLSearchParams({ n });
-    if (zona) params.append("zona", zona);
-    return fetch(`${BASE_URL}/historial?${params}`).then((r) => r.json());
+    const p = new URLSearchParams({ n });
+    if (zona) p.append("zona", zona);
+    return fetch(`${BASE_URL}/historial?${p}`).then(json);
   },
 
   consultarRAG: (query, k = 3, categoria = null) =>
@@ -27,16 +31,24 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query, k, categoria }),
-    }).then((r) => r.json()),
+    }).then(json),
 
   // ── Simulador ─────────────────────────────────────────────────────────────
-  simularCiclo: (zona, evento = false) =>
-    fetch(`http://localhost:8005/simular?zona=${zona}&evento=${evento}`, {
-      method: "POST",
-    }).then((r) => r.json()),
-
   iniciarSimulacion: () =>
-    fetch("http://localhost:8005/iniciar", { method: "POST" }).then((r) => r.json()),
-};
+    fetch(`${SIM_URL}/iniciar`, { method: "POST" }).then(json),
 
-export { WS_URL };
+  detenerSimulacion: () =>
+    fetch(`${SIM_URL}/detener`, { method: "POST" }).then(json),
+
+  // ── Agente de Gases ───────────────────────────────────────────────────────
+  /** Envía una lectura manual y obtiene el análisis completo */
+  analizarLectura: (zona, CH4, CO, CO2, O2, H2S, temperatura_C = 22, humedad_pct = 75) =>
+    fetch(`${AGENTE_GAS}/analizar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ zona, CH4, CO, CO2, O2, H2S, temperatura_C, humedad_pct }),
+    }).then(json),
+
+  historialGas: (zona, n = 50) =>
+    fetch(`${AGENTE_GAS}/historial/${zona}?n=${n}`).then(json),
+};
