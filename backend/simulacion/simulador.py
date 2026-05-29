@@ -187,25 +187,57 @@ DETECCIONES_VISUALES = [
 class Simulador:
     """Generador de datos sintéticos y cliente HTTP para enviar al sistema."""
 
+    # Factor de inercia temporal (0 = sin memoria, 1 = sin cambio).
+    # 0.72 → cada lectura es 72% del valor anterior + 28% del objetivo.
+    # Produce autocorrelación natural y evita saltos bruscos entre ciclos normales.
+    _ALPHA = 0.72
+
     def __init__(self) -> None:
         self._corriendo = False
         self._ciclo     = 0
         self._client: Optional[httpx.AsyncClient] = None
         # Estado de perturbación activa por zona: {zona: {gas: valor, ciclos_restantes}}
         self._perturbacion_activa: dict = {}
+        # Último valor medido por zona y gas (para suavizado temporal)
+        self._estado_actual: dict = {}
 
-    # ── Lectura normal ─────────────────────────────────────────────────────────
+    def _init_estado(self, zona: str) -> None:
+        """Inicializa el estado de una zona con la línea base del perfil."""
+        if zona not in self._estado_actual:
+            perfil = PERFILES_ZONA.get(zona, PERFILES_ZONA["Bocamina"])
+            self._estado_actual[zona] = {
+                gas: float(np.random.normal(mu, sigma * 0.5))
+                for gas, (mu, sigma) in perfil.items()
+            }
+
+    # ── Lectura normal con inercia temporal ────────────────────────────────────
     def _lectura_gas_normal(self, zona: str) -> dict:
-        perfil = PERFILES_ZONA.get(zona, PERFILES_ZONA["Bocamina"])
-        gases = {}
+        """
+        Genera una lectura con continuidad temporal (proceso AR(1)):
+          nuevo = alpha * anterior + (1-alpha) * objetivo + ruido_pequeño
+        El resultado evoluciona suavemente en lugar de saltar de forma aleatoria.
+        """
+        self._init_estado(zona)
+        perfil  = PERFILES_ZONA.get(zona, PERFILES_ZONA["Bocamina"])
+        previo  = self._estado_actual[zona]
+        alpha   = self._ALPHA
+        gases   = {}
+
         for gas, (mu, sigma) in perfil.items():
-            val = np.random.normal(mu, sigma)
-            # O2 tiene límite superior físico de 21%
+            # Objetivo: valor de la línea base con pequeño ruido
+            objetivo = float(np.random.normal(mu, sigma * 0.4))
+            # Inercia: mezcla entre el valor anterior y el objetivo
+            nuevo = alpha * previo[gas] + (1 - alpha) * objetivo
+            # Ruido de sensor (muy pequeño, simula resolución del sensor)
+            nuevo += float(np.random.normal(0, sigma * 0.06))
             if gas == "O2":
-                val = float(np.clip(val, 0, 21.0))
+                nuevo = float(np.clip(nuevo, 18.0, 21.0))
             else:
-                val = float(np.clip(val, 0, None))
-            gases[gas] = round(val, 4)
+                nuevo = float(np.clip(nuevo, 0.0, None))
+            gases[gas] = round(nuevo, 4)
+
+        # Guardar como nuevo estado
+        self._estado_actual[zona] = dict(gases)
         return gases
 
     def _lectura_geo_normal(self, zona: str) -> dict:
@@ -276,8 +308,13 @@ class Simulador:
         incidente = random.choices(INCIDENTES, weights=PESOS_INCIDENTES, k=1)[0]
         tipo = incidente["tipo"]
 
+        zona_actual = next(iter(self._estado_actual), None)
         for gas, (lo, hi) in incidente["gases"].items():
-            gases[gas] = round(random.uniform(lo, hi), 4)
+            val = round(random.uniform(lo, hi), 4)
+            gases[gas] = val
+            # Actualizar estado para que la recuperación sea gradual
+            if zona_actual and zona_actual in self._estado_actual:
+                self._estado_actual[zona_actual][gas] = val
 
         # Incidentes geomecánicos asociados
         if tipo in ("explosion_polvo_carbon", "escape_ch4_masivo"):
@@ -302,7 +339,12 @@ class Simulador:
         #  80%  → operación normal (SEGURO)
         r = random.random()
         if forzar_evento or r < 0.05:
+            # Pasar zona para que _inyectar_incidente actualice el estado correcto
+            self._init_estado(zona)
+            # Guardamos zona temporalmente para que _inyectar_incidente la use
+            self._zona_en_curso = zona
             gases, geo, tipo_evento = self._inyectar_incidente(gases, geo)
+            self._estado_actual[zona] = {g: gases[g] for g in gases}
         elif r < 0.20:
             gases, tipo_evento = self._aplicar_perturbacion(gases, zona)
         else:

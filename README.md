@@ -1,4 +1,4 @@
-# Sistema Multiagente de Monitoreo para Minería Subterránea — UPTC 2026
+# Sistema Multiagente de Monitoreo para Minería Subterránea 
 
 Sistema de inteligencia artificial para monitoreo en tiempo real de condiciones de seguridad en minas subterráneas. Combina agentes especializados, modelos LSTM, detección de anomalías y un corpus normativo para detectar, predecir y notificar riesgos con referencia directa al Decreto 1886/2015 y estándares internacionales (OSHA, MSHA, NIOSH).
 
@@ -123,9 +123,11 @@ pip install -r requirements.txt
 
 ```cmd
 cd frontend
-npm install
+pnpm install
 cd ..
 ```
+
+> Si no tienes pnpm instalado: `npm install -g pnpm`
 
 ### 5. Verificar la instalacion
 
@@ -323,8 +325,8 @@ proyecto_mineria_ia/
 
 | Zona | Perfil de riesgo |
 |---|---|
-| `Frente_A_Sogamoso` | Alta actividad. CH4 y CO elevados. |
-| `Frente_B_Mongua` | Frente activo secundario. |
+| `Frente_A` | Alta actividad. CH4 y CO elevados. |
+| `Frente_B` | Frente activo secundario. |
 | `Galeria_Central` | Zona de transito. Riesgo moderado. |
 | `Bocamina` | Entrada principal. Riesgo bajo. |
 
@@ -396,6 +398,3 @@ proyecto_mineria_ia/
 
 ---
 
-## Autores
-
-Proyecto desarrollado para la asignatura de **Inteligencia Artificial** — Ingenieria de Sistemas, UPTC 2026.

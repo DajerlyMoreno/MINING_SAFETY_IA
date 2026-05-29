@@ -141,13 +141,13 @@ if /i not "%ARG%"=="--sin-frontend" if /i not "%ARG%"=="--solo-backend" (
     if exist "frontend\package.json" (
 
         if not exist "frontend\node_modules" (
-            echo Instalando dependencias npm...
+            echo Instalando dependencias pnpm...
             cd frontend
-            npm install
+            pnpm install
             cd ..
         )
 
-        start "Frontend React" cmd /k "cd /d %PROJECT_ROOT%\frontend && npm run dev -- --port 3000"
+        start "Frontend React" cmd /k "cd /d %PROJECT_ROOT%\frontend && pnpm run dev -- --port 3000"
 
         echo Frontend iniciado en puerto 3000.
 

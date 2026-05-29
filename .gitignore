@@ -45,11 +45,15 @@ modelos/_backup/
 # ── Indice FAISS (se reconstruye automaticamente) ──────────────────
 rag_data/faiss_index/
 
-# ── Frontend — Node.js ────────────────────────────────────────────
+# ── Frontend — Node.js / pnpm ─────────────────────────────────────
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/coverage/
+# pnpm — el lockfile SÍ se versiona (garantiza reproducibilidad)
+# pnpm-lock.yaml  <- NO ignorar
+.pnpm-store/
+.pnpm-debug.log
 
 # ── Distribucion y empaquetado Python ─────────────────────────────
 *.egg-info/

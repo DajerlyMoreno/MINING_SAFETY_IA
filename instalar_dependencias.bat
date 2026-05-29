@@ -79,8 +79,25 @@ if errorlevel 1 (
 )
 echo.
 
-:: Paso 5: Verificar instalacion critica
-echo [5/5] Verificando instalacion...
+:: Paso 5: Instalar dependencias del frontend con pnpm
+echo [5/6] Instalando dependencias del frontend (pnpm)...
+where pnpm >nul 2>&1
+if errorlevel 1 (
+    echo [INFO] pnpm no encontrado. Instalando globalmente...
+    npm install -g pnpm --quiet
+)
+cd frontend
+pnpm install --frozen-lockfile
+if errorlevel 1 (
+    echo [ADVERTENCIA] pnpm install tuvo errores. Intenta manualmente: cd frontend && pnpm install
+) else (
+    echo [OK] Dependencias del frontend instaladas.
+)
+cd ..
+echo.
+
+:: Paso 6: Verificar instalacion critica
+echo [6/6] Verificando instalacion backend...
 python -c "import tensorflow as tf; import tf_keras; import h5py; import numpy as np; print('TF:', tf.__version__); print('tf_keras:', tf_keras.__version__); print('h5py:', h5py.__version__); print('numpy:', np.__version__)"
 if errorlevel 1 (
     echo [ERROR] Verificacion fallida. Revisa los errores anteriores.
