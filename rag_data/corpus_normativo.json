@@ -1,0 +1,98 @@
+[
+  {
+    "id": "D1886_Art64",
+    "titulo": "Decreto 1886/2015 Art. 64 — Límite permisible de Metano (CH₄)",
+    "categoria": "CH4",
+    "contenido": "Artículo 64. Metano. En las labores subterráneas de minería de carbón, la concentración de metano (CH₄) no podrá superar el 0.5% en volumen en el ambiente de trabajo. Cuando la concentración alcance el 1.0%, se deberán suspender inmediatamente todas las actividades y evacuar el personal del frente de trabajo. Si la concentración supera el 1.5%, se ordenará la evacuación total de la mina. El empleador deberá instalar monitores continuos de CH₄ en todos los frentes activos, galerías de ventilación y bocaminas. Los límites de explosividad del metano están entre el 5% (LEL) y el 15% (UEL) en volumen. Cualquier lectura superior al 1% debe considerarse señal de alarma inmediata."
+  },
+  {
+    "id": "D1886_Art65",
+    "titulo": "Decreto 1886/2015 Art. 65 — Ventilación y control de metano",
+    "categoria": "CH4",
+    "contenido": "Artículo 65. Control de metano y ventilación. El sistema de ventilación de la mina debe garantizar que la concentración de CH₄ se mantenga por debajo de los límites establecidos. El caudal mínimo de aire fresco en los frentes de trabajo activos será de 0.3 metros cúbicos por segundo por trabajador presente. Cuando se detecte CH₄ superior al 0.5%, se incrementará el caudal de ventilación y se suspenderá el uso de equipos que generen chispas. La empresa minera deberá contar con un plan de emergencia específico para escapes de metano, que incluya procedimientos de evacuación, comunicación con brigadas de rescate y contacto con la Agencia Nacional de Minería (ANM)."
+  },
+  {
+    "id": "D1886_Art66",
+    "titulo": "Decreto 1886/2015 Art. 66 — Monóxido de Carbono (CO)",
+    "categoria": "CO",
+    "contenido": "Artículo 66. Monóxido de Carbono. La concentración de monóxido de carbono (CO) en el ambiente de trabajo subterráneo no podrá superar los 25 partes por millón (ppm) durante una jornada laboral de 8 horas (TLV-TWA). El valor límite de exposición de corta duración (TLV-STEL, 15 minutos) es de 100 ppm. Concentraciones superiores a 50 ppm exigen el uso de equipos de protección respiratoria con filtro específico para CO. Si la concentración supera los 100 ppm, se ordenará la evacuación del área afectada. El CO es producido principalmente por combustión incompleta de equipos diésel, voladuras y procesos de oxidación espontánea del carbón. Se deben instalar detectores de CO en zonas con presencia de equipos de combustión interna."
+  },
+  {
+    "id": "D1886_Art67",
+    "titulo": "Decreto 1886/2015 Art. 67 — Dióxido de Carbono (CO₂)",
+    "categoria": "CO2",
+    "contenido": "Artículo 67. Dióxido de Carbono. La concentración de dióxido de carbono (CO₂) no podrá superar el 0.5% en volumen durante la jornada ordinaria de trabajo. Concentraciones entre 0.5% y 1.5% requieren ventilación adicional y monitoreo continuo. Cuando el CO₂ supere el 1.5%, se deberá evacuar el área inmediatamente, ya que existe riesgo de asfixia. Valores superiores al 3% son inmediatamente peligrosos para la vida. El CO₂ se acumula en zonas bajas de la mina por ser más pesado que el aire. Las voladuras generan grandes cantidades de CO₂ que requieren ventilación forzada durante al menos 30 minutos antes del reingreso del personal. El monitoreo de CO₂ también sirve como indicador indirecto de fuegos en la mina."
+  },
+  {
+    "id": "D1886_Art68",
+    "titulo": "Decreto 1886/2015 Art. 68 — Oxígeno (O₂) — Deficiencia de oxígeno",
+    "categoria": "O2",
+    "contenido": "Artículo 68. Oxígeno. La concentración de oxígeno en el ambiente de trabajo subterráneo deberá mantenerse entre el 19.5% y el 23.0% en volumen. Una concentración inferior al 19.5% constituye deficiencia de oxígeno y requiere acción correctiva inmediata mediante incremento del caudal de ventilación. Cuando el O₂ descienda por debajo del 17%, se ordenará la evacuación del personal con equipos de respiración autónoma. Concentraciones inferiores al 16% son inmediatamente peligrosas para la vida (IDLH según NIOSH). La deficiencia de oxígeno puede ser causada por la presencia de otros gases (CH₄, CO₂, N₂), por procesos de oxidación del carbón o por insuficiencia del sistema de ventilación. Nunca se permitirá el ingreso a áreas con O₂ inferior al 19.5% sin equipo de respiración autónoma."
+  },
+  {
+    "id": "D1886_Art69",
+    "titulo": "Decreto 1886/2015 Art. 69 — Sulfuro de Hidrógeno (H₂S)",
+    "categoria": "H2S",
+    "contenido": "Artículo 69. Sulfuro de Hidrógeno. La concentración de sulfuro de hidrógeno (H₂S) no podrá exceder 1 parte por millón (ppm) durante una jornada completa de trabajo (TLV-TWA). El límite de exposición de corta duración (STEL) es de 5 ppm por un máximo de 15 minutos. Concentraciones de 10 ppm o superiores exigen el uso inmediato de protección respiratoria. A 20 ppm, el H₂S produce irritación severa de las vías respiratorias y se ordena la evacuación inmediata. La concentración IDLH (Immediately Dangerous to Life or Health) es de 50 ppm según NIOSH. El H₂S es un gas extremadamente tóxico de olor a huevo podrido que puede causar parálisis olfativa, impidiendo su detección por olor a altas concentraciones. Se origina en la descomposición anaeróbica de materia orgánica y en la reducción de sulfatos por bacterias en aguas de mina."
+  },
+  {
+    "id": "D1886_Art70",
+    "titulo": "Decreto 1886/2015 Art. 70 — Plan de emergencia minera",
+    "categoria": "emergencia",
+    "contenido": "Artículo 70. Plan de Emergencia. Toda empresa minera subterránea deberá contar con un Plan de Emergencia aprobado por la Agencia Nacional de Minería (ANM). El plan debe incluir: procedimientos de evacuación por zona, sistema de comunicación interno y externo, brigada de rescate minero certificada, equipos de respiración autónoma suficientes para todo el personal, mapas actualizados de la mina con rutas de escape, contactos de emergencia incluyendo la ANM al 57-1-3199099. La señal de evacuación general es: tres pitidos cortos seguidos de un pitido largo. Los simulacros de evacuación son obligatorios al menos dos veces al año. El plan debe revisarse cada vez que se modifiquen las labores de la mina."
+  },
+  {
+    "id": "D1886_Art71",
+    "titulo": "Decreto 1886/2015 Art. 71 — Brigadas de rescate minero",
+    "categoria": "emergencia",
+    "contenido": "Artículo 71. Brigadas de Rescate. Las minas subterráneas con más de 20 trabajadores deberán contar con brigadas de rescate minero propias o compartidas con otras empresas de la región. Los integrantes de las brigadas deben recibir capacitación específica en: uso de equipos de respiración autónoma, técnicas de rescate en espacios confinados, primeros auxilios avanzados, control de incendios subterráneos y manejo de explosivos. La brigada debe estar disponible las 24 horas y contar con equipos de comunicación redundantes. En caso de emergencia, el jefe de turno es responsable de activar el plan de emergencia y notificar a la ANM."
+  },
+  {
+    "id": "D1886_Art118",
+    "titulo": "Decreto 1886/2015 Art. 118-121 — Ventilación en minas de carbón",
+    "categoria": "ventilacion",
+    "contenido": "Artículos 118 a 121. Ventilación en Minería de Carbón. El sistema de ventilación principal de minas de carbón subterráneas debe garantizar un flujo de aire continuo que mantenga las concentraciones de gases peligrosos dentro de los límites permisibles. El ventilador principal debe ser de accionamiento eléctrico con motor antiexplosivo y contar con ventilador de reserva. La medición del caudal de ventilación debe realizarse al menos cada turno en los frentes activos. El reversado de la ventilación debe ser posible en caso de emergencia. La velocidad mínima del aire en las vías de acceso es de 0.3 m/s y en los frentes de trabajo de 0.5 m/s. Se prohíbe el ingreso a labores con ventilación insuficiente. Los informes de ventilación deben ser firmados por el ingeniero responsable de la mina."
+  },
+  {
+    "id": "OSHA_1910_146",
+    "titulo": "OSHA 29 CFR 1910.146 — Espacios Confinados con Permiso",
+    "categoria": "estandar_internacional",
+    "contenido": "OSHA Standard 1910.146 — Permit-Required Confined Spaces. Define los requisitos para el trabajo seguro en espacios confinados que presentan riesgos para la vida. Un espacio confinado requiere permiso cuando contiene o puede contener: atmósfera peligrosa (gases tóxicos, explosivos o deficiencia de O₂), material que puede engullir al trabajador, configuración interna que puede atrapar al trabajador, o cualquier otro peligro reconocido. Los límites OSHA para atmósferas peligrosas en espacios confinados son: O₂ < 19.5% o > 23.5%, gases inflamables > 10% del LEL, CO > 35 ppm TWA. Toda entrada requiere prueba atmosférica previa, sistema de rescate y comunicación continua con un asistente externo."
+  },
+  {
+    "id": "MSHA_30_CFR_57",
+    "titulo": "MSHA 30 CFR Part 57 — Estándares de Seguridad Minería Subterránea",
+    "categoria": "estandar_internacional",
+    "contenido": "MSHA 30 CFR Part 57 — Safety and Health Standards for Underground Metal and Nonmetal Mines. Establece los límites de exposición para minería subterránea: CO máximo 50 ppm TLV-TWA (MSHA) / 35 ppm OSHA PEL; CH₄ — alerta obligatoria cuando supera el 1% del volumen (10% del LEL); O₂ mínimo 19.5% requerido para trabajo seguro. Los equipos diésel en minas subterráneas deben cumplir con los límites de emisiones de MSHA y contar con catalizadores aprobados. La revisión de la calidad del aire es obligatoria al inicio de cada turno y después de voladuras. MSHA requiere que todos los trabajadores usen detectores personales de gases en minas con historial de problemas de ventilación."
+  },
+  {
+    "id": "NIOSH_IDLH",
+    "titulo": "NIOSH IDLH — Concentraciones Inmediatamente Peligrosas para la Vida",
+    "categoria": "estandar_internacional",
+    "contenido": "NIOSH Immediately Dangerous to Life or Health (IDLH) Values. Los valores IDLH representan la concentración máxima a la que un trabajador podría exponerse durante 30 minutos y escapar sin sufrir efectos irreversibles o impedimentos para escapar. Valores IDLH relevantes para minería: CH₄ — 10% concentración en aire (explosividad); CO — 1200 ppm; CO₂ — 40000 ppm (4%); O₂ — < 16% concentración en aire; H₂S — 50 ppm. Estos valores son utilizados para diseñar equipos de protección respiratoria de escape (SCSR — Self-Contained Self-Rescuers) que deben estar disponibles en todas las labores subterráneas. En presencia de concentraciones IDLH, la evacuación inmediata es la única acción apropiada."
+  },
+  {
+    "id": "ACGIH_TLV",
+    "titulo": "ACGIH TLV-TWA — Valores Límite Umbral para Sustancias Químicas",
+    "categoria": "estandar_internacional",
+    "contenido": "ACGIH Threshold Limit Values (TLV) for Chemical Substances. Los TLV-TWA representan la concentración promedio ponderada en el tiempo para una jornada laboral de 8 horas y 40 horas semanales, a la cual la mayoría de los trabajadores pueden estar expuestos sin efectos adversos. Valores TLV-TWA para gases en minería: CO — 25 ppm; CO₂ — 5000 ppm (0.5%); H₂S — 1 ppm; CH₄ — simple asfixiante (sin TLV específico). Los TLV-STEL (exposición de corta duración, 15 min) son: CO — 100 ppm; H₂S — 5 ppm; CO₂ — 30000 ppm (3%). Estos valores son adoptados como referencia técnica por el Decreto 1886/2015 de Colombia."
+  },
+  {
+    "id": "D1886_Evacuacion",
+    "titulo": "Decreto 1886/2015 — Protocolo de Evacuación Total",
+    "categoria": "evacuacion",
+    "contenido": "Protocolo de Evacuación Total según Decreto 1886/2015. La evacuación total inmediata de una mina subterránea se ordena cuando: la concentración de CH₄ supera el 1.5%, la concentración de CO supera los 200 ppm, la concentración de CO₂ supera el 3%, la concentración de O₂ cae por debajo del 16%, la concentración de H₂S supera los 50 ppm, se detecta inicio de incendio subterráneo, o se produce colapso estructural con riesgo de propagación. La señal de evacuación es: TRES PITIDOS CORTOS + UN PITIDO LARGO. Todo el personal debe dirigirse a la bocamina por la ruta más corta disponible. El jefe de turno debe llamar al 123 (emergencias) y a la ANM al 57-1-3199099. Nadie puede reingresar hasta que el ingeniero responsable certifique que las condiciones son seguras."
+  },
+  {
+    "id": "D1886_MonitoreoGases",
+    "titulo": "Decreto 1886/2015 — Sistema de Monitoreo Continuo de Gases",
+    "categoria": "monitoreo",
+    "contenido": "Sistema de Monitoreo Continuo de Gases según Decreto 1886/2015. Las minas de carbón subterráneas con producción mayor a 100 toneladas diarias deben contar con sistema de monitoreo continuo y automático de gases en: todos los frentes de trabajo activos, galería principal de ventilación (entrada y retorno), bocamina, y zonas de carga y descarga de mineral. Los sensores deben calibrarse según las especificaciones del fabricante, con frecuencia mínima mensual. El sistema debe generar alarmas automáticas en sala de control cuando se superen los umbrales de PRECAUCIÓN. Las lecturas deben registrarse con sello de tiempo y conservarse por mínimo 2 años. Los equipos de monitoreo personal (detectores 4 en 1) son obligatorios para todos los trabajadores en zonas de riesgo."
+  },
+  {
+    "id": "D1886_Voladura",
+    "titulo": "Decreto 1886/2015 — Procedimiento post-voladura",
+    "categoria": "CO",
+    "contenido": "Procedimiento de Seguridad Post-Voladura según Decreto 1886/2015. Después de cada voladura en labores subterráneas, se deben seguir los siguientes pasos: 1) Activar ventilación forzada al máximo caudal inmediatamente después de la voladura. 2) Mantener el personal evacuado del frente durante un mínimo de 30 minutos. 3) El ingeniero o técnico de turno debe medir los gases (CO, CO₂, CH₄, O₂) en el frente antes de autorizar el reingreso. 4) Solo se permite el reingreso cuando CO < 25 ppm, CO₂ < 0.5%, CH₄ < 0.5% y O₂ > 19.5%. 5) Las cargas de detonadores eléctricos deben utilizarse con explosor aprobado para atmósferas explosivas. El CO generado por voladuras puede alcanzar concentraciones de 50-200 ppm en el frente inmediatamente después de la detonación."
+  }
+]

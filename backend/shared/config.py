@@ -15,7 +15,7 @@ except ImportError:
 
 # Rutas base
 ROOT_DIR   = Path(__file__).resolve().parent.parent.parent
-MODELS_DIR = ROOT_DIR / "modelos"
+MODELS_DIR = ROOT_DIR / "modelos_reparados"   # única carpeta de modelos
 RAG_DIR    = ROOT_DIR / "rag_data"
 LOGS_DIR   = ROOT_DIR / "logs"
 DATA_DIR   = ROOT_DIR / "datasets"
@@ -41,36 +41,19 @@ class AgentConfig:
         return f"{self.base_url}/health"
 
 
-MODELS_REPARADOS_DIR = ROOT_DIR / "modelos_reparados"
-
-
 @dataclass(frozen=True)
 class ModelPaths:
-    """Rutas absolutas a los modelos entrenados.
+    """Rutas absolutas a los modelos entrenados (todos en modelos_reparados/)."""
 
-    Estrategia de búsqueda LSTM:
-      1. modelos_reparados/gases/  (versión con scalers corregidos)
-      2. modelos/gases/            (versión original, fallback)
-    """
-    # Gases — usa modelos_reparados si existen, si no modelos/
-    lstm_gases_dir:         Path = field(default_factory=lambda:
-        MODELS_REPARADOS_DIR / "gases"
-        if (MODELS_REPARADOS_DIR / "gases").exists()
-        else MODELS_DIR / "gases")
+    # Gases
+    lstm_gases_dir:         Path = field(default_factory=lambda: MODELS_DIR / "gases")
+    lstm_scalers_gases:     Path = field(default_factory=lambda: MODELS_DIR / "gases" / "lstm_scalers_gases_nuevos.pkl")
+    isolation_forest_gases: Path = field(default_factory=lambda: MODELS_DIR / "gases" / "isolation_forest.pkl")
 
-    lstm_scalers_gases:     Path = field(default_factory=lambda:
-        MODELS_REPARADOS_DIR / "gases" / "lstm_scalers_gases_nuevos.pkl"
-        if (MODELS_REPARADOS_DIR / "gases" / "lstm_scalers_gases_nuevos.pkl").exists()
-        else MODELS_DIR / "gases" / "lstm_scalers_gases_nuevos.pkl")
-
-    isolation_forest_gases: Path = field(default_factory=lambda:
-        MODELS_REPARADOS_DIR / "gases" / "isolation_forest.pkl"
-        if (MODELS_REPARADOS_DIR / "gases" / "isolation_forest.pkl").exists()
-        else MODELS_DIR / "gases" / "isolation_forest.pkl")
-
-    # Geomecanico (no implementado aun)
+    # Geomecanico (pendiente de implementacion)
     lstm_geo_dir:           Path = field(default_factory=lambda: MODELS_DIR / "geomecanico")
     rf_geomecanico:         Path = field(default_factory=lambda: MODELS_DIR / "geomecanico" / "rf_geomecanico.pkl")
+
     # RAG
     faiss_index_dir:        Path = field(default_factory=lambda: RAG_DIR / "faiss_index")
     corpus_json:            Path = field(default_factory=lambda: RAG_DIR / "corpus_normativo.json")
