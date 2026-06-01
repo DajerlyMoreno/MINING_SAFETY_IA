@@ -219,6 +219,48 @@ async def obtener_historial(zona: str, n: int = 50):
     return {"zona": zona, "lecturas": historial[zona][-n:]}
 
 
+@app.post(
+    "/ciclo/{zona}",
+    summary="Ciclo autónomo — recolecta del simulador, procesa y entrega",
+    description=(
+        "El agente actúa de forma autónoma: "
+        "1. Lee los valores crudos del sensor de gases desde el simulador. "
+        "2. Aplica umbrales Decreto 1886/2015, LSTM y detección de anomalías. "
+        "3. Retorna el análisis procesado listo para el orquestador. "
+        "Este endpoint implementa el flujo correcto donde el agente RECOLECTA "
+        "su información del sensor y la procesa antes de pasarla a la siguiente capa."
+    ),
+)
+async def ciclo_autonomo(zona: str):
+    """
+    Flujo correcto: Agente Gases recolecta sensor → procesa → entrega resultado.
+    Llama al simulador en /sensores/gases/{zona} para obtener datos crudos.
+    """
+    import httpx
+    from backend.shared.config import settings
+
+    sim_url = f"http://{settings.simulador.host}:{settings.simulador.port}/sensores/gases/{zona}"
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(sim_url)
+            resp.raise_for_status()
+            datos = resp.json()
+    except Exception as e:
+        raise HTTPException(503, f"Simulador no disponible: {e}")
+
+    # Construir request con los datos crudos del sensor y procesar
+    req = LecturaGasRequest(
+        zona=zona,
+        CH4=datos.get("CH4", 0.0),
+        CO= datos.get("CO",  0.0),
+        CO2=datos.get("CO2", 0.0),
+        O2= datos.get("O2",  20.9),
+        H2S=datos.get("H2S", 0.0),
+    )
+    return await analizar(req)
+
+
 @app.get("/predictor/status")
 async def predictor_status():
     """Diagnóstico del predictor LSTM: modelos cargados, scalers, modo, rutas."""

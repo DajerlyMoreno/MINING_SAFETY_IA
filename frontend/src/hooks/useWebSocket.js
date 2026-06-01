@@ -29,7 +29,8 @@ export function useWebSocket() {
 
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
-      if (msg.tipo === "EVENTO_GLOBAL") {
+      // Acepta EVENTO_GLOBAL (flujo clásico y LangGraph) y EVENTO_LANGGRAPH (legado)
+      if (msg.tipo === "EVENTO_GLOBAL" || msg.tipo === "EVENTO_LANGGRAPH") {
         const evento = msg.datos;
         setUltimoEvento(evento);
         setNivelActual(evento.nivel_global);

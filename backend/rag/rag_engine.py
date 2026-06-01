@@ -89,8 +89,14 @@ class RAGEngine:
     def _reconstruir_desde_corpus(self):
         """Reconstruye el indice FAISS desde el corpus JSON."""
         from langchain_community.vectorstores import FAISS
-        from langchain.text_splitter import RecursiveCharacterTextSplitter
-        from langchain.docstore.document import Document as LCDocument
+        try:
+            from langchain_text_splitters import RecursiveCharacterTextSplitter
+        except ImportError:
+            from langchain.text_splitter import RecursiveCharacterTextSplitter
+        try:
+            from langchain_core.documents import Document as LCDocument
+        except ImportError:
+            from langchain.docstore.document import Document as LCDocument
 
         corpus_path = settings.model_paths.corpus_json
         if not corpus_path.exists():
@@ -144,11 +150,13 @@ class RAGEngine:
                 if categoria and doc.metadata.get("categoria") != categoria:
                     continue
                 out.append({
-                    "id":         doc.metadata.get("id", ""),
-                    "titulo":     doc.metadata.get("titulo", ""),
-                    "categoria":  doc.metadata.get("categoria", "general"),
-                    "contenido":  doc.page_content,
-                    "relevancia": round(1.0 / (1.0 + score), 4),
+                    "id":         str(doc.metadata.get("id", "")),
+                    "titulo":     str(doc.metadata.get("titulo", "")),
+                    "categoria":  str(doc.metadata.get("categoria", "general")),
+                    "contenido":  str(doc.page_content),
+                    # Convertir a float nativo — FAISS devuelve numpy.float32/64
+                    # que msgpack (LangGraph checkpointer) no puede serializar.
+                    "relevancia": round(float(1.0 / (1.0 + float(score))), 4),
                 })
                 if len(out) >= k:
                     break
@@ -184,6 +192,50 @@ class RAGEngine:
             tokens.append("geomecanica derrumbe estabilidad sostenimiento")
         query = " ".join(tokens) + " emergencia protocolo decreto"
         return self.consultar(query, k=4)
+
+    async def consultar_con_llm(
+        self,
+        consulta: str,
+        k: int = 3,
+        categoria: str | None = None,
+        estado_actual: str = "Sistema activo",
+    ) -> dict:
+        """
+        RAG completo: recupera fragmentos normativos con FAISS y luego
+        llama a Gemini para generar una respuesta contextualizada en lenguaje natural.
+
+        Args:
+            consulta: Pregunta o descripción del evento en lenguaje libre.
+            k:        Número de fragmentos a recuperar del corpus.
+            categoria: Filtro opcional de categoría normativa.
+            estado_actual: Texto con el estado del sistema para contexto del LLM.
+
+        Returns:
+            dict con 'respuesta' (texto generado por Gemini),
+            'docs_rag' (fragmentos recuperados) y 'llm_activo' (bool).
+        """
+        # Paso 1 — Recuperación semántica con FAISS
+        docs = self.consultar(consulta, k=k, categoria=categoria)
+
+        # Paso 2 — Generación con Gemini usando los fragmentos recuperados
+        # Importación local para evitar circular import (ambos son singletons)
+        from backend.llm.llm_engine import llm
+
+        if not llm._inicializado:
+            llm.inicializar()
+
+        respuesta = await llm.responder_consulta(
+            consulta=consulta,
+            normativa_docs=docs,
+            estado_actual=estado_actual,
+        )
+
+        return {
+            "respuesta":  respuesta,
+            "docs_rag":   docs,
+            "llm_activo": llm.operativo,
+            "fuentes":    [d.get("titulo", "") for d in docs],
+        }
 
 
 # Instancia global (singleton)

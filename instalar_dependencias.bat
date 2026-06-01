@@ -49,8 +49,8 @@ if errorlevel 1 (
 echo [OK] TensorFlow y tf-keras instalados.
 echo.
 
-:: Paso 4: Instalar el resto de dependencias
-echo [4/5] Instalando resto de dependencias...
+:: Paso 4: Instalar dependencias web y ML base
+echo [4/5] Instalando dependencias web y ML...
 pip install ^
     fastapi==0.111.0 ^
     "uvicorn[standard]==0.30.1" ^
@@ -58,9 +58,6 @@ pip install ^
     python-dotenv==1.0.1 ^
     "pydantic==2.7.4" ^
     "websockets>=12.0" ^
-    langchain==0.2.16 ^
-    langchain-community==0.2.16 ^
-    langchain-core==0.2.38 ^
     faiss-cpu==1.8.0 ^
     sentence-transformers==3.0.1 ^
     scikit-learn==1.5.1 ^
@@ -73,9 +70,45 @@ pip install ^
     aiosqlite==0.20.0 ^
     --quiet
 if errorlevel 1 (
-    echo [ADVERTENCIA] Algunas dependencias tuvieron errores. Revisa arriba.
+    echo [ADVERTENCIA] Algunas dependencias base tuvieron errores.
 ) else (
-    echo [OK] Dependencias instaladas correctamente.
+    echo [OK] Dependencias base instaladas.
+)
+echo.
+
+:: Capa 2: Google Gemini SDK (LLM)
+echo Instalando Google Gemini SDK (Capa 2 - LLM)...
+pip install "google-genai>=1.0.0" --quiet
+if errorlevel 1 (
+    echo [ADVERTENCIA] google-genai no instalado. Sistema en modo fallback sin LLM.
+) else (
+    echo [OK] Google Gemini SDK instalado.
+)
+echo.
+
+:: Capa 3: LangGraph + LangChain (Orquestacion autonoma)
+echo Instalando LangGraph y LangChain (Capa 3)...
+pip install ^
+    "langchain>=0.3.0" ^
+    "langchain-community>=0.3.0" ^
+    "langchain-core>=0.3.0" ^
+    "langchain-text-splitters>=0.3.0" ^
+    "langgraph>=1.0.0" ^
+    --quiet
+if errorlevel 1 (
+    echo [ADVERTENCIA] LangGraph/LangChain tuvieron errores.
+) else (
+    echo [OK] LangGraph y LangChain instalados.
+)
+echo.
+
+:: Capa 4: Twilio para bot WhatsApp (opcional)
+echo Instalando Twilio SDK (Capa 4 - WhatsApp Bot, opcional)...
+pip install twilio --quiet
+if errorlevel 1 (
+    echo [INFO] Twilio no instalado - bot WhatsApp no disponible.
+) else (
+    echo [OK] Twilio instalado.
 )
 echo.
 

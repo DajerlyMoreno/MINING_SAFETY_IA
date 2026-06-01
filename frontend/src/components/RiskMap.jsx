@@ -94,6 +94,8 @@ export function RiskMap({ eventos = [] }) {
   const [nivelOrq,    setNivelOrq]    = useState({});
   // Gases crudos para tooltip
   const [gasesPorZona, setGasesPorZona] = useState({});
+  // Último evento completo del orquestador por zona (para tooltip con "por qué")
+  const [eventosPorZona, setEventosPorZona] = useState({});
 
   const [hoveredZona,  setHoveredZona]  = useState(null);
   const [tooltipPos,   setTooltipPos]   = useState({ x: 0, y: 0 });
@@ -120,16 +122,20 @@ export function RiskMap({ eventos = [] }) {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  // ── Orquestador WebSocket (decisión oficial) ──────────────────────────────
+  // ── Orquestador WebSocket — guarda el evento completo por zona ────────────
   useEffect(() => {
     if (!eventos || eventos.length === 0) return;
-    const updates = {};
-    for (const ev of eventos) {               // eventos[0] = más reciente
+    const updatesNivel = {};
+    const updatesEvento = {};
+    for (const ev of eventos) {
       if (!ev.zona) continue;
-      if (updates[ev.zona] === undefined)
-        updates[ev.zona] = normalizarNivel(ev.nivel_global);
+      if (updatesNivel[ev.zona] === undefined) {
+        updatesNivel[ev.zona]  = normalizarNivel(ev.nivel_global);
+        updatesEvento[ev.zona] = ev;           // ← evento completo para tooltip
+      }
     }
-    setNivelOrq(prev => ({ ...prev, ...updates }));
+    setNivelOrq(prev    => ({ ...prev, ...updatesNivel  }));
+    setEventosPorZona(prev => ({ ...prev, ...updatesEvento }));
   }, [eventos]);
 
   // ── Nivel efectivo = máximo entre local y orquestador ────────────────────
@@ -209,44 +215,136 @@ export function RiskMap({ eventos = [] }) {
         })}
       </svg>
 
-      {/* Tooltip */}
-      {hoveredZona && (
-        <div className="fixed z-50 bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-xl pointer-events-none"
-          style={{ left: tooltipPos.x + 16, top: tooltipPos.y - 60, minWidth: 200 }}>
-          <p className="text-white font-bold text-xs mb-1">{hoveredZona.replace(/_/g," ")}</p>
-          <p className="text-xs mb-1" style={{ color: COLORES_NIVEL[nivelEfectivo(hoveredZona)] }}>
-            ● {nivelEfectivo(hoveredZona)}
-          </p>
-          {fuenteLabel(hoveredZona) && (
-            <p className="text-xs text-gray-500 mb-2">
-              fuente: {fuenteLabel(hoveredZona) === "orquestador"
-                ? "🧠 orquestador" : "📡 lectura directa"}
-            </p>
-          )}
-          {gasesPorZona[hoveredZona] ? (
-            <table className="text-xs w-full">
-              <tbody>
-                {["CH4","CO","CO2","O2","H2S"].map(gas => {
-                  const val = gasesPorZona[hoveredZona][gas];
-                  if (val === undefined) return null;
-                  const nGas  = clasificarGas(gas, val);
-                  const color = COLORES_NIVEL[nGas] || "#9ca3af";
-                  const unidad = ["O2","CH4","CO2"].includes(gas) ? "%" : "ppm";
-                  return (
-                    <tr key={gas}>
-                      <td className="text-gray-400 pr-2">{gas}</td>
-                      <td className="font-mono" style={{ color }}>{Number(val).toFixed(3)}</td>
-                      <td className="text-gray-500 pl-1">{unidad}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-gray-500 text-xs">Cargando lecturas…</p>
-          )}
-        </div>
-      )}
+      {/* Tooltip enriquecido */}
+      {hoveredZona && (() => {
+        const nivel   = nivelEfectivo(hoveredZona);
+        const color   = COLORES_NIVEL[nivel] || "#9ca3af";
+        const fuente  = fuenteLabel(hoveredZona);
+        const gases   = gasesPorZona[hoveredZona] || {};
+        const ev      = eventosPorZona[hoveredZona] || {};
+        const correls = ev.correlaciones || [];
+        const criticos = ev.gases_criticos || [];
+        const diagLLM  = ev.diagnostico_llm || "";
+        const ts       = ev.timestamp ? ev.timestamp.slice(0, 19).replace("T", " ") : null;
+
+        // Gases fuera de rango (calculado en frontend si no hay evento del orquestador)
+        const gasesAlerta = criticos.length > 0
+          ? criticos
+          : Object.entries(gases)
+              .map(([g, v]) => {
+                const n = clasificarGas(g, v);
+                return n !== "SEGURO" ? { gas: g, valor: v, nivel: n } : null;
+              })
+              .filter(Boolean);
+
+        return (
+          <div
+            className="fixed z-50 bg-gray-900 border border-gray-600 rounded-xl shadow-2xl
+                       pointer-events-none text-white"
+            style={{
+              left:     tooltipPos.x + 18,
+              top:      Math.max(8, tooltipPos.y - 80),
+              minWidth: 260,
+              maxWidth: 320,
+            }}
+          >
+            {/* Cabecera con color del nivel */}
+            <div className="rounded-t-xl px-3 py-2" style={{ background: color + "22", borderBottom: `1px solid ${color}44` }}>
+              <div className="flex justify-between items-start">
+                <p className="font-bold text-sm">{hoveredZona.replace(/_/g, " ")}</p>
+                {ts && <p className="text-[10px] text-gray-400">{ts}</p>}
+              </div>
+              <p className="text-sm font-bold mt-0.5" style={{ color }}>
+                ● {nivel}
+              </p>
+              {fuente && (
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                  {fuente === "orquestador" ? "🧠 vía orquestador" : "📡 sensor directo"}
+                </p>
+              )}
+            </div>
+
+            <div className="px-3 py-2 space-y-2">
+
+              {/* Por qué cambió el estado */}
+              {(correls.length > 0 || gasesAlerta.length > 0) && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+                    ⚡ Por qué cambió
+                  </p>
+                  {correls.map((c, i) => (
+                    <div key={i} className="flex items-start gap-1 mb-0.5">
+                      <span className="text-orange-400 text-xs shrink-0 mt-0.5">▸</span>
+                      <span className="text-xs text-orange-200 leading-tight">{c}</span>
+                    </div>
+                  ))}
+                  {gasesAlerta.length > 0 && correls.length === 0 && gasesAlerta.map((g, i) => (
+                    <div key={i} className="flex items-start gap-1 mb-0.5">
+                      <span className="text-yellow-400 text-xs shrink-0 mt-0.5">▸</span>
+                      <span className="text-xs text-yellow-100 leading-tight">
+                        {g.nombre ?? g.gas}: {typeof g.valor === "number"
+                          ? g.valor.toFixed(3) : g.valor} — <strong>{g.nivel}</strong>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Lecturas de gases */}
+              {Object.keys(gases).length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+                    🧪 Lecturas
+                  </p>
+                  <table className="text-xs w-full">
+                    <tbody>
+                      {["CH4","CO","CO2","O2","H2S"].map(gas => {
+                        const val = gases[gas];
+                        if (val === undefined) return null;
+                        const nGas  = clasificarGas(gas, val);
+                        const clr   = COLORES_NIVEL[nGas] || "#9ca3af";
+                        const unidad = ["O2","CH4","CO2"].includes(gas) ? "%" : "ppm";
+                        const esAlerta = nGas !== "SEGURO";
+                        return (
+                          <tr key={gas} className={esAlerta ? "font-semibold" : ""}>
+                            <td className="text-gray-400 pr-2 py-0.5 w-10">{gas}</td>
+                            <td className="font-mono py-0.5" style={{ color: clr }}>
+                              {Number(val).toFixed(3)}
+                            </td>
+                            <td className="text-gray-500 pl-1 py-0.5">{unidad}</td>
+                            {esAlerta && (
+                              <td className="pl-2 py-0.5 text-[10px]" style={{ color: clr }}>
+                                {nGas}
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Diagnóstico LLM (preview) */}
+              {diagLLM && (
+                <div className="border-t border-gray-700 pt-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1">
+                    🧠 Diagnóstico LLM
+                  </p>
+                  <p className="text-[11px] text-gray-300 leading-snug">
+                    {diagLLM.length > 150 ? diagLLM.slice(0, 150) + "…" : diagLLM}
+                  </p>
+                </div>
+              )}
+
+              {/* Si no hay datos */}
+              {Object.keys(gases).length === 0 && !diagLLM && (
+                <p className="text-gray-500 text-xs">Cargando datos…</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Leyenda */}
       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3">

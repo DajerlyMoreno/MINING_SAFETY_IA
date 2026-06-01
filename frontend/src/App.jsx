@@ -7,6 +7,8 @@ import { RiskMap }           from "./components/RiskMap";
 import { AlertPanel }        from "./components/AlertPanel";
 import { GasPanel }          from "./components/GasPanel";
 import { PrediccionesPanel } from "./components/PrediccionesPanel";
+import { LLMDiagnostico }    from "./components/LLMDiagnostico";
+import { WhatsAppChat }      from "./components/WhatsAppChat";
 import { useWebSocket }      from "./hooks/useWebSocket";
 import { api }               from "./services/api";
 
@@ -103,11 +105,12 @@ export default function App() {
       </div>
 
       {/* ── Tabs ───────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 mb-4 bg-gray-900 rounded-xl p-1 border border-gray-800">
+      <div className="flex flex-wrap gap-1 mb-4 bg-gray-900 rounded-xl p-1 border border-gray-800">
         {[
-          { id: "gases",        label: "🧪 Gases en Tiempo Real" },
-          { id: "predicciones", label: "📈 Predicciones LSTM" },
-          { id: "mapa",         label: "🗺 Mapa de Riesgo" },
+          { id: "gases",        label: "🧪 Gases" },
+          { id: "predicciones", label: "📈 LSTM" },
+          { id: "mapa",         label: "🗺 Riesgo" },
+          { id: "whatsapp",     label: "💬 Bot WhatsApp" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -124,7 +127,7 @@ export default function App() {
       </div>
 
       {/* ── Contenido ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
 
         {/* TAB: Gases en tiempo real */}
         {tabActivo === "gases" && (
@@ -179,16 +182,29 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB: Mapa de riesgo */}
+        {/* TAB: Mapa de riesgo + Diagnóstico LLM */}
         {tabActivo === "mapa" && (
           <>
+            {/* Fila 1: Mapa + Alertas con la misma altura */}
             <div className="lg:col-span-2">
               <RiskMap eventos={eventos} />
             </div>
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 lg:min-h-0" style={{ height: "100%" }}>
               <AlertPanel eventos={eventos} />
             </div>
+
+            {/* Fila 2: Diagnóstico LLM + Historial LangGraph justo debajo */}
+            <div className="lg:col-span-3">
+              <LLMDiagnostico ultimoEvento={ultimoEvento} />
+            </div>
           </>
+        )}
+
+        {/* TAB: Bot WhatsApp */}
+        {tabActivo === "whatsapp" && (
+          <div className="lg:col-span-3">
+            <WhatsAppChat />
+          </div>
         )}
 
       </div>

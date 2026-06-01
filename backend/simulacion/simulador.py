@@ -422,16 +422,25 @@ class Simulador:
         payload = {"zona": zona, "gases": gases, "imagen": imagen, "geo": geo}
 
         try:
-            url  = f"http://{settings.orquestador_host}:{settings.orquestador_port}/orquestar"
-            resp = await self._client.post(url, json=payload, timeout=10.0)
+            # Usar siempre el flujo LangGraph (cíclico con memoria y LLM)
+            url  = f"http://{settings.orquestador_host}:{settings.orquestador_port}/orquestar_langgraph"
+            resp = await self._client.post(url, json=payload, timeout=15.0)
             resp.raise_for_status()
-            resultado  = resp.json()
-            nivel      = resultado.get("nivel_global", "?")
-            log.info(f"[SIM] Ciclo {self._ciclo} | {zona} | {tipo_evento} | Nivel: {nivel}")
+            resultado = resp.json()
+            nivel     = resultado.get("nivel_global", "?")
+            iter_n    = resultado.get("iteracion", "?")
+            log.info(f"[SIM] Ciclo {self._ciclo} | {zona} | {tipo_evento} | Nivel: {nivel} | LangGraph iter: {iter_n}")
             return resultado
         except Exception as e:
-            log.error(f"[SIM] Error enviando ciclo: {e}")
-            return {}
+            log.warning(f"[SIM] LangGraph no disponible ({e}) — reintentando con /orquestar")
+            try:
+                url_fallback = f"http://{settings.orquestador_host}:{settings.orquestador_port}/orquestar"
+                resp = await self._client.post(url_fallback, json=payload, timeout=10.0)
+                resp.raise_for_status()
+                return resp.json()
+            except Exception as e2:
+                log.error(f"[SIM] Error en fallback /orquestar: {e2}")
+                return {}
 
     async def ejecutar_ciclo_unico(
         self, zona: Optional[str] = None, forzar_evento: bool = False
@@ -468,7 +477,16 @@ class Simulador:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-sim_app = FastAPI(title="Simulador Sensores Minería", version="2.0.0")
+sim_app = FastAPI(
+    title="Simulador Sensores Minería — UPTC 2026",
+    version="2.0.0",
+    description=(
+        "Simula sensores físicos de la mina. "
+        "Los endpoints /sensores/* devuelven únicamente datos crudos de sensores. "
+        "Los agentes especializados consumen estos endpoints para recolectar "
+        "su información, procesarla y entregarla al orquestador."
+    ),
+)
 sim_app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -479,10 +497,174 @@ sim_app.add_middleware(
 simulador = Simulador()
 
 
-@sim_app.post("/simular")
+# ══════════════════════════════════════════════════════════════════════════════
+# ENDPOINTS DE SENSORES PUROS
+# Representan los sensores físicos instalados en la mina.
+# Solo producen el valor medido — sin clasificación, sin normativa, sin acciones.
+# Cada agente especializado lee de estos endpoints de forma independiente.
+# ══════════════════════════════════════════════════════════════════════════════
+
+@sim_app.get(
+    "/sensores/gases/{zona}",
+    summary="Sensor de gases — valor crudo",
+    description=(
+        "Retorna las 5 lecturas de gas del sensor instalado en la zona. "
+        "Equivale a lo que mediría un analizador multigas Dräger X-am 5100 real. "
+        "El Agente de Gases consume este endpoint para recolectar los datos, "
+        "aplicar umbrales Decreto 1886/2015, LSTM y detección de anomalías."
+    ),
+)
+async def sensor_gases(zona: str):
+    """Valores crudos del sensor de gases — sin procesamiento."""
+    simulador._init_estado(zona)
+    # Aplicar perturbaciones/incidentes activos (solo actualiza targets)
+    simulador._aplicar_perturbacion(zona)
+    gases = simulador._lectura_gas_normal(zona)
+    return {
+        "zona":      zona,
+        "timestamp": datetime.utcnow().isoformat(),
+        "sensor":    "analizador_multigas",
+        # Solo los 5 valores medidos — nada más
+        "CH4": gases["CH4"],
+        "CO":  gases["CO"],
+        "CO2": gases["CO2"],
+        "O2":  gases["O2"],
+        "H2S": gases["H2S"],
+    }
+
+
+@sim_app.get(
+    "/sensores/geo/{zona}",
+    summary="Sensores geomecánicos — valor crudo",
+    description=(
+        "Retorna las lecturas de extensómetro, convergímetro y sensor de presión. "
+        "El Agente Geomecánico consume este endpoint para su análisis."
+    ),
+)
+async def sensor_geo(zona: str):
+    """Valores crudos de sensores geomecánicos — sin procesamiento."""
+    geo = simulador._lectura_geo_normal(zona)
+    return {
+        "zona":      zona,
+        "timestamp": datetime.utcnow().isoformat(),
+        "sensor":    "extensometro_convergimetro",
+        **geo,
+    }
+
+
+@sim_app.get(
+    "/sensores/imagen/{zona}",
+    summary="Cámara IP — clasificación visual cruda",
+    description=(
+        "Retorna la detección visual de la cámara IP instalada en la galería. "
+        "En producción sería la salida del modelo cGAN-entrenado. "
+        "El Agente de Imágenes consume este endpoint."
+    ),
+)
+async def sensor_imagen(zona: str):
+    """Clasificación cruda de la cámara IP — sin análisis de riesgo."""
+    imagen = simulador._deteccion_visual()
+    return {
+        "zona":      zona,
+        "timestamp": datetime.utcnow().isoformat(),
+        "sensor":    "camara_ip",
+        **imagen,
+    }
+
+
+@sim_app.get(
+    "/sensores/{zona}",
+    summary="Todos los sensores — valores crudos",
+    description="Retorna en una sola llamada los datos crudos de los 3 tipos de sensor.",
+)
+async def sensores_todos(zona: str):
+    """Bundle de sensores crudos para una zona (gases + geo + imagen)."""
+    simulador._init_estado(zona)
+    gases  = simulador._lectura_gas_normal(zona)
+    geo    = simulador._lectura_geo_normal(zona)
+    imagen = simulador._deteccion_visual()
+    return {
+        "zona":      zona,
+        "timestamp": datetime.utcnow().isoformat(),
+        "gases":     gases,
+        "geo":       geo,
+        "imagen":    imagen,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ENDPOINTS DE CICLO
+# Para desarrollo y pruebas. Disparan el flujo completo del pipeline.
+# ══════════════════════════════════════════════════════════════════════════════
+
+@sim_app.post(
+    "/simular",
+    summary="Ciclo clásico (legado)",
+    description=(
+        "Genera datos y los envía DIRECTO al orquestador como bundle completo. "
+        "Mantiene compatibilidad con el flujo anterior. "
+        "Para el flujo correcto usa /simular_agentes/{zona}."
+    ),
+)
 async def simular_ciclo(zona: str = "Frente_A_Sogamoso", evento: bool = False):
     resultado = await simulador.ejecutar_ciclo_unico(zona, forzar_evento=evento)
     return {"zona": zona, "evento_forzado": evento, "resultado": resultado}
+
+
+@sim_app.post(
+    "/simular_agentes/{zona}",
+    summary="Ciclo correcto — cada agente recolecta sus propios datos",
+    description=(
+        "Flujo arquitecturalmente correcto: "
+        "1. Simulador genera datos crudos de sensores. "
+        "2. El Agente de Gases llama a /sensores/gases/{zona}, procesa y entrega al orquestador. "
+        "3. El Agente Geomecánico llama a /sensores/geo/{zona}, procesa y entrega. "
+        "4. El Agente de Imágenes llama a /sensores/imagen/{zona}, procesa y entrega. "
+        "5. El Orquestador correlaciona los 3 análisis independientes."
+    ),
+)
+async def simular_via_agentes(zona: str):
+    """
+    Flujo correcto del pipeline multiagente:
+    Simulador (sensor) → Cada Agente (recoge y procesa) → Orquestador (correlaciona).
+    """
+    async with httpx.AsyncClient(timeout=15.0) as client:
+
+        # Paso 1: Cada agente recolecta sus propios datos del simulador y los procesa
+        resp_gases, resp_geo, resp_imagen = await asyncio.gather(
+            client.post(f"http://127.0.0.1:8001/ciclo/{zona}"),
+            client.post(f"http://127.0.0.1:8003/ciclo/{zona}"),
+            client.post(f"http://127.0.0.1:8002/ciclo/{zona}"),
+            return_exceptions=True,
+        )
+
+        analisis_gases  = resp_gases.json()  if not isinstance(resp_gases,  Exception) else {}
+        analisis_geo    = resp_geo.json()    if not isinstance(resp_geo,    Exception) else {}
+        analisis_imagen = resp_imagen.json() if not isinstance(resp_imagen, Exception) else {}
+
+        # Paso 2: Enviar los análisis ya procesados al orquestador para correlación
+        # El orquestador recibe resultados de agentes, no datos crudos de sensores
+        resp_orq = await client.post(
+            "http://127.0.0.1:8000/recibir_analisis",
+            json={
+                "zona":           zona,
+                "analisis_gases": analisis_gases,
+                "analisis_geo":   analisis_geo,
+                "analisis_imagen": analisis_imagen,
+            },
+        )
+        resultado = resp_orq.json() if resp_orq.status_code == 200 else {
+            "nota": "Orquestador no disponible — análisis individuales retornados"
+        }
+
+    return {
+        "zona":             zona,
+        "flujo":            "agentes_independientes",
+        "analisis_gases":   analisis_gases,
+        "analisis_geo":     analisis_geo,
+        "analisis_imagen":  analisis_imagen,
+        "correlacion_orquestador": resultado,
+    }
 
 
 @sim_app.post("/iniciar")
@@ -495,3 +677,20 @@ async def iniciar_simulacion(max_ciclos: int = -1):
 async def detener_simulacion():
     simulador.detener()
     return {"estado": "simulacion_detenida"}
+
+
+@sim_app.get("/estado")
+async def estado_simulador():
+    return {
+        "corriendo":          simulador._corriendo,
+        "ciclo_actual":       simulador._ciclo,
+        "zonas_activas":      list(simulador._estado_actual.keys()),
+        "perturbaciones":     {
+            z: p["tipo"] for z, p in simulador._perturbacion_activa.items()
+        },
+        "flujos_disponibles": {
+            "clasico":   "POST /simular?zona=X  (bundle directo al orquestador)",
+            "correcto":  "POST /simular_agentes/X  (cada agente recoge sus datos)",
+            "sensores":  "GET  /sensores/gases/X   (solo datos crudos)",
+        },
+    }

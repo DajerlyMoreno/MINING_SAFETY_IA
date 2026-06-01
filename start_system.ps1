@@ -1,10 +1,18 @@
 # start_system.ps1
 # ════════════════════════════════════════════════════════════════════════════
-# Inicia los servicios IMPLEMENTADOS del sistema multiagente.
-# VERSIÓN ACTUAL: Orquestador + Agente de Gases + Simulador
+# Sistema Multiagente Minería Subterránea IA — UPTC 2026
+# Servicios: Gases(8001) + Imágenes(8002) + Geomecánico(8003)
+#            + Monitor(8004) + Simulador(8005) + WhatsApp(8006)
+#            + Orquestador(8000) + Dashboard React(3000)
+#
+# Variables de entorno opcionales en .env:
+#   GEMINI_API_KEY=AIza...         (LLM — gratis en aistudio.google.com)
+#   TWILIO_ACCOUNT_SID=...         (WhatsApp real)
+#   TWILIO_AUTH_TOKEN=...
+#   WHATSAPP_ALERTAS=+573001234567 (números para alertas críticas)
 #
 # Uso:
-#   .\start_system.ps1                    -> backend + frontend
+#   .\start_system.ps1                    -> backend completo + frontend
 #   .\start_system.ps1 -SinFrontend       -> solo backend
 #
 # Si PowerShell bloquea la ejecucion:
@@ -31,8 +39,8 @@ function Write-Step($n,$total,$msg) { Write-Host "`n[$n/$total] $msg" -Foregroun
 $ROOT = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Set-Location $ROOT
 
-Write-Header "Sistema Multiagente Mineria - UPTC 2026"
-Write-Host "  Servicios activos: Orquestador + Gases + Simulador" -ForegroundColor Gray
+Write-Header "Sistema Multiagente Mineria IA - UPTC 2026"
+Write-Host "  Capas: cGANs(1) + LLM+RAG(2) + LangGraph+4Agentes(3) + WhatsApp(4)" -ForegroundColor Gray
 Write-Host "  Directorio: $ROOT" -ForegroundColor Gray
 
 # ── Rutas del entorno virtual ────────────────────────────────────────────────
@@ -91,18 +99,39 @@ function Start-Servicio {
 }
 
 # ── 4. Servicios backend ─────────────────────────────────────────────────────
-Write-Step 4 5 "Iniciando servicios backend"
+Write-Step 4 5 "Iniciando servicios backend (8 servicios)"
 
 $procs = @()
-$procs += Start-Servicio "AGENTE GASES"   8001 "backend.agentes.gases.app:app"
+
+# Capa 3 — Agentes especializados (arrancar primero)
+$procs += Start-Servicio "AGENTE GASES"       8001 "backend.agentes.gases.app:app"
 Write-Ok "Agente de Gases iniciado (8001)"
+Start-Sleep -Seconds 3
+
+$procs += Start-Servicio "AGENTE IMAGENES"    8002 "backend.agentes.imagenes.app:app"
+Write-Ok "Agente de Imágenes iniciado (8002)"
+Start-Sleep -Seconds 2
+
+$procs += Start-Servicio "AGENTE GEOMECANICO" 8003 "backend.agentes.geomecanico.app:app"
+Write-Ok "Agente Geomecánico iniciado (8003)"
+Start-Sleep -Seconds 2
+
+$procs += Start-Servicio "AGENTE MONITOR"     8004 "backend.agentes.monitor.app:app"
+Write-Ok "Agente Monitor iniciado (8004)"
+Start-Sleep -Seconds 2
+
+# Capa 4 — Bot WhatsApp
+$procs += Start-Servicio "BOT WHATSAPP"       8006 "backend.whatsapp.app:app"
+Write-Ok "Bot WhatsApp iniciado (8006)"
+Start-Sleep -Seconds 2
+
+# Capa 3 — Orquestador central (LangGraph + LLM)
+$procs += Start-Servicio "ORQUESTADOR"        8000 "backend.orquestador.app:app" "info"
+Write-Ok "Orquestador + LangGraph iniciado (8000)"
 Start-Sleep -Seconds 5
 
-$procs += Start-Servicio "ORQUESTADOR"    8000 "backend.orquestador.app:app" "info"
-Write-Ok "Orquestador iniciado (8000)"
-Start-Sleep -Seconds 4
-
-$procs += Start-Servicio "SIMULADOR"      8005 "backend.simulacion.simulador:sim_app"
+# Simulador
+$procs += Start-Servicio "SIMULADOR"          8005 "backend.simulacion.simulador:sim_app"
 Write-Ok "Simulador iniciado (8005)"
 Start-Sleep -Seconds 2
 
@@ -132,15 +161,27 @@ if (-not $SinFrontend -and -not $SoloBackend) {
 }
 
 # ── Resumen ──────────────────────────────────────────────────────────────────
-Write-Header "Sistema iniciado"
+Write-Header "Sistema iniciado — UPTC 2026"
 Write-Host ""
-Write-Host "  Orquestador:   http://localhost:8000/docs" -ForegroundColor White
-Write-Host "  Agente Gases:  http://localhost:8001/docs" -ForegroundColor White
-Write-Host "  Simulador:     http://localhost:8005/docs" -ForegroundColor White
-Write-Host "  Dashboard:     http://localhost:3000" -ForegroundColor White
+Write-Host "  CAPA 2+3 — Orquestador + LangGraph:" -ForegroundColor Cyan
+Write-Host "    http://localhost:8000/docs" -ForegroundColor White
+Write-Host "  CAPA 3 — Agentes especializados:" -ForegroundColor Cyan
+Write-Host "    Gases:       http://localhost:8001/docs" -ForegroundColor White
+Write-Host "    Imágenes:    http://localhost:8002/docs" -ForegroundColor White
+Write-Host "    Geomecánico: http://localhost:8003/docs" -ForegroundColor White
+Write-Host "    Monitor:     http://localhost:8004/docs" -ForegroundColor White
+Write-Host "  CAPA 4 — Bot WhatsApp + Dashboard:" -ForegroundColor Cyan
+Write-Host "    Bot:         http://localhost:8006/docs" -ForegroundColor White
+Write-Host "    Dashboard:   http://localhost:3000" -ForegroundColor White
 Write-Host ""
-Write-Host "  Simular ciclo manual:" -ForegroundColor Gray
+Write-Host "  Simular ciclo clásico:" -ForegroundColor Gray
 Write-Host '  Invoke-RestMethod -Method POST "http://localhost:8005/simular?zona=Frente_A_Sogamoso"' -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  Simular ciclo LangGraph (con memoria acumulativa):" -ForegroundColor Gray
+Write-Host '  Invoke-RestMethod -Method POST "http://localhost:8000/orquestar_langgraph" -ContentType "application/json" -Body '"'"'{"zona":"Frente_A_Sogamoso","gases":{"CH4":0.8,"CO":15,"CO2":0.2,"O2":20.8,"H2S":0.3},"imagen":{"deteccion":"normal","confianza":0.95,"n_personas":2},"geo":{"deformacion_mm":1.5,"vibracion_mms":4.0,"presion_kpa":35,"convergencia_mm":2.0,"indice_estabilidad":0.85}}'"'"'' -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  Chat Bot WhatsApp (prueba web):" -ForegroundColor Gray
+Write-Host '  Invoke-RestMethod -Method POST "http://localhost:8006/chat" -ContentType "application/json" -Body '"'"'{"mensaje":"estado"}'"'"'' -ForegroundColor Yellow
 Write-Host ""
 Write-Host "  Para detener: .\stop_system.ps1" -ForegroundColor Gray
 Write-Host $("=" * 56) -ForegroundColor Cyan

@@ -1,4 +1,5 @@
 # stop_system.ps1 — Detiene todos los servicios del sistema multiagente.
+# Puertos cubiertos: 8000-8006 (incluye Bot WhatsApp :8006) + 3000 (React)
 
 $ROOT     = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $pidsFile = Join-Path $ROOT ".system_pids.txt"
@@ -25,7 +26,8 @@ if (Test-Path $pidsFile) {
 }
 
 # Liberar puertos por si acaso quedaron procesos huerfanos
-$puertos = @(8000, 8001, 8002, 8003, 8004, 8005, 3000)
+# 8006 = Bot WhatsApp (nuevo)
+$puertos = @(8000, 8001, 8002, 8003, 8004, 8005, 8006, 3000)
 foreach ($puerto in $puertos) {
     $conn = netstat -aon | Select-String ":$puerto " | Select-String "LISTENING"
     if ($conn) {
@@ -39,5 +41,5 @@ foreach ($puerto in $puertos) {
     }
 }
 
-Write-Host "`n  Sistema detenido correctamente.`n" -ForegroundColor Green
+Write-Host "`n  Sistema detenido. Puertos liberados: 8000-8006, 3000`n" -ForegroundColor Green
 Read-Host "Presiona Enter para cerrar"

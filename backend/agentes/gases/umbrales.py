@@ -46,7 +46,7 @@ UMBRALES_GAS: dict[str, UmbralGas] = {
     ),
     "O2": UmbralGas(
         "Oxígeno", "% v/v",
-        (20.5, 23.5), (19.5, 20.49), (18.0, 19.49), (0.0, 17.99),
+        (19.5, 23.5), (17.5, 19.49), (16.0, 17.49), (0.0, 15.99),
         "Deficiencia: <19.5% riesgo fisiológico. <16% pérdida de consciencia.",
         "Art. 118 Decreto 1886/2015 — OSHA 1910.146: <19.5% espacio confinado",
         20.9, 0.2,
