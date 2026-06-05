@@ -1,6 +1,6 @@
 /**
- * LLMDiagnostico.jsx — Panel de diagnóstico generado por Gemini + RAG.
- * Muestra el razonamiento LLM del último evento procesado por LangGraph.
+ * LLMDiagnostico.jsx — Panel de diagnostico generado por Gemini + RAG.
+ * Muestra el razonamiento LLM del ultimo evento procesado por LangGraph.
  */
 
 import React, { useState, useEffect } from "react";
@@ -8,7 +8,6 @@ import React, { useState, useEffect } from "react";
 const ORQUESTADOR = import.meta.env.VITE_ORQUESTADOR || "http://localhost:8000";
 const ZONAS = ["Frente_A_Sogamoso", "Frente_B_Mongua", "Galeria_Central", "Bocamina"];
 
-// ─── Estado del LLM ──────────────────────────────────────────────────────────
 function EstadoLLM({ llmActivo, ultimoError }) {
   if (llmActivo === null) return null;
 
@@ -20,7 +19,6 @@ function EstadoLLM({ llmActivo, ultimoError }) {
     );
   }
 
-  // No activo — mostrar causa
   let msg = "Sin clave GEMINI_API_KEY";
   let cls = "bg-gray-700 text-gray-300";
   if (ultimoError) {
@@ -28,7 +26,7 @@ function EstadoLLM({ llmActivo, ultimoError }) {
       msg = "Cuota agotada (429)";
       cls = "bg-orange-800 text-orange-200";
     } else if (ultimoError.includes("401") || ultimoError.includes("403") || ultimoError.includes("invalid")) {
-      msg = "Clave inválida (401/403)";
+      msg = "Clave invalida (401/403)";
       cls = "bg-red-800 text-red-200";
     } else {
       msg = "Error API";
@@ -37,21 +35,19 @@ function EstadoLLM({ llmActivo, ultimoError }) {
   }
   return (
     <span className={`text-xs px-2 py-0.5 rounded-full ${cls}`} title={ultimoError}>
-      ⚠️ {msg}
+      {msg}
     </span>
   );
 }
 
 
-// ─── Consulta libre al LLM ────────────────────────────────────────────────────
 function PanelConsulta() {
-  const [consulta,   setConsulta]   = useState("");
-  const [respuesta,  setRespuesta]  = useState(null);
-  const [cargando,   setCargando]   = useState(false);
-  const [llmActivo,  setLlmActivo]  = useState(null);
+  const [consulta,    setConsulta]    = useState("");
+  const [respuesta,   setRespuesta]   = useState(null);
+  const [cargando,    setCargando]    = useState(false);
+  const [llmActivo,   setLlmActivo]   = useState(null);
   const [ultimoError, setUltimoError] = useState("");
 
-  // Cargar estado real del LLM al montar
   useEffect(() => {
     const cargar = async () => {
       try {
@@ -91,11 +87,10 @@ function PanelConsulta() {
   return (
     <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
       <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
-        🤖 Consulta al LLM
+        Consulta al LLM
         <EstadoLLM llmActivo={llmActivo} ultimoError={ultimoError} />
       </h3>
 
-      {/* Aviso de cuota agotada */}
       {ultimoError && (ultimoError.includes("429") || ultimoError.includes("RESOURCE_EXHAUSTED")) && (
         <div className="mb-3 bg-orange-950 border border-orange-700 rounded-lg p-2 text-xs text-orange-200">
           <strong>Cuota de Gemini agotada.</strong> Obtén una nueva clave gratuita en{" "}
@@ -106,7 +101,7 @@ function PanelConsulta() {
       )}
       {ultimoError && (ultimoError.includes("401") || ultimoError.includes("403")) && (
         <div className="mb-3 bg-red-950 border border-red-700 rounded-lg p-2 text-xs text-red-200">
-          <strong>Clave inválida.</strong> La clave debe comenzar con <code>AIzaSy...</code> y obtenerse desde{" "}
+          <strong>Clave invalida.</strong> La clave debe comenzar con <code>AIzaSy...</code> y obtenerse desde{" "}
           <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer"
              className="underline text-red-300">aistudio.google.com/apikey</a>.
         </div>
@@ -116,7 +111,7 @@ function PanelConsulta() {
           value={consulta}
           onChange={(e) => setConsulta(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && enviar()}
-          placeholder="¿Qué hago si el CH₄ supera 1.5%? ¿Cuál es el protocolo de evacuación?"
+          placeholder="Que hago si el CH4 supera 1.5%? Cual es el protocolo de evacuacion?"
           className="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-3 py-2
                      text-sm text-white placeholder-gray-500 focus:outline-none
                      focus:border-blue-500"
@@ -127,7 +122,7 @@ function PanelConsulta() {
           className="bg-blue-700 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed
                      px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
-          {cargando ? "⏳" : "Enviar"}
+          {cargando ? "Enviando..." : "Enviar"}
         </button>
       </div>
       {respuesta && (
@@ -135,7 +130,7 @@ function PanelConsulta() {
           {respuesta.respuesta}
           {respuesta.docs_rag > 0 && (
             <p className="text-xs text-gray-500 mt-2">
-              📚 Respaldado por {respuesta.docs_rag} fragmentos normativos (RAG)
+              Respaldado por {respuesta.docs_rag} fragmentos normativos (RAG)
             </p>
           )}
         </div>
@@ -144,7 +139,6 @@ function PanelConsulta() {
   );
 }
 
-// ─── Historial LangGraph por zona ─────────────────────────────────────────────
 const DATOS_DEFAULT = {
   zona: "Frente_A_Sogamoso",
   gases:  { CH4: 0.28, CO: 5.8, CO2: 0.11, O2: 20.62, H2S: 0.18 },
@@ -154,12 +148,11 @@ const DATOS_DEFAULT = {
 };
 
 function HistorialLangGraph({ zona }) {
-  const [historial,    setHistorial]    = useState(null);
-  const [histRegular,  setHistRegular]  = useState([]);
-  const [ejecutando,   setEjecutando]   = useState(false);
-  const [msgBtn,       setMsgBtn]       = useState("");
+  const [historial,   setHistorial]   = useState(null);
+  const [histRegular, setHistRegular] = useState([]);
+  const [ejecutando,  setEjecutando]  = useState(false);
+  const [msgBtn,      setMsgBtn]      = useState("");
 
-  // Carga historial LangGraph (MemorySaver)
   useEffect(() => {
     const cargar = async () => {
       try {
@@ -172,7 +165,6 @@ function HistorialLangGraph({ zona }) {
     return () => clearInterval(id);
   }, [zona]);
 
-  // Carga historial regular del orquestador como fallback
   useEffect(() => {
     const cargar = async () => {
       try {
@@ -190,7 +182,7 @@ function HistorialLangGraph({ zona }) {
 
   const ejecutarLangGraph = async () => {
     setEjecutando(true);
-    setMsgBtn("Ejecutando ciclo LangGraph…");
+    setMsgBtn("Ejecutando ciclo LangGraph...");
     try {
       const payload = { ...DATOS_DEFAULT, zona };
       const r = await fetch(`${ORQUESTADOR}/orquestar_langgraph`, {
@@ -200,7 +192,6 @@ function HistorialLangGraph({ zona }) {
       });
       if (r.ok) {
         setMsgBtn("Ciclo completado");
-        // Refrescar historial
         const rh = await fetch(`${ORQUESTADOR}/langgraph/historial/${zona}`);
         if (rh.ok) setHistorial(await rh.json());
       } else {
@@ -214,19 +205,18 @@ function HistorialLangGraph({ zona }) {
     }
   };
 
-  if (!historial) return <p className="text-xs text-gray-500">Cargando historial LangGraph…</p>;
+  if (!historial) return <p className="text-xs text-gray-500">Cargando historial LangGraph...</p>;
 
-  const niveles = historial.historial_niveles || [];
-  const eventos = historial.historial_eventos || [];
+  const niveles  = historial.historial_niveles || [];
+  const eventos  = historial.historial_eventos || [];
   const sinCiclos = (historial.iteracion || 0) === 0;
 
-  // Si no hay ciclos LangGraph, mostrar historial regular como vista previa
   if (sinCiclos) {
     return (
       <div className="space-y-3">
         <div className="bg-gray-800 rounded-lg p-3 border border-indigo-800/40 text-center">
           <p className="text-xs text-gray-400 mb-2">
-            El flujo LangGraph aún no se ha ejecutado para esta zona.
+            El flujo LangGraph aun no se ha ejecutado para esta zona.
           </p>
           <button
             onClick={ejecutarLangGraph}
@@ -234,16 +224,15 @@ function HistorialLangGraph({ zona }) {
             className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-50
                        px-4 py-1.5 rounded-lg text-xs font-medium transition-colors"
           >
-            {ejecutando ? "⏳ Ejecutando…" : "▶ Probar ciclo LangGraph"}
+            {ejecutando ? "Ejecutando..." : "Probar ciclo LangGraph"}
           </button>
           {msgBtn && <p className="text-xs text-indigo-300 mt-1">{msgBtn}</p>}
         </div>
 
-        {/* Eventos regulares mientras no hay LangGraph */}
         {histRegular.length > 0 && (
           <div>
             <p className="text-xs text-gray-500 font-medium mb-1">
-              Últimos eventos del orquestador (flujo clásico):
+              Ultimos eventos del orquestador (flujo clasico):
             </p>
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {[...histRegular].reverse().map((ev, i) => (
@@ -288,7 +277,7 @@ function HistorialLangGraph({ zona }) {
             className="text-xs bg-indigo-800 hover:bg-indigo-700 disabled:opacity-50
                        px-2 py-1 rounded transition-colors"
           >
-            {ejecutando ? "⏳" : "▶ Nuevo ciclo"}
+            {ejecutando ? "Ejecutando..." : "Nuevo ciclo"}
           </button>
           <span className="text-xs text-gray-400">
             Zona: <strong className="text-blue-400">{zona.replace(/_/g, " ")}</strong>
@@ -296,10 +285,9 @@ function HistorialLangGraph({ zona }) {
         </div>
       </div>
 
-      {/* Distribución de niveles */}
       {Object.keys(conteos).length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs text-gray-500 font-medium">Distribución histórica:</p>
+          <p className="text-xs text-gray-500 font-medium">Distribucion historica:</p>
           {Object.entries(conteos).map(([n, c]) => (
             <div key={n} className="flex items-center gap-2 text-xs">
               <span className="w-36 truncate text-gray-300">{n}</span>
@@ -309,16 +297,15 @@ function HistorialLangGraph({ zona }) {
                   style={{ width: `${Math.min(100, (c / niveles.length) * 100)}%` }}
                 />
               </div>
-              <span className="text-gray-400 w-8 text-right">{c}×</span>
+              <span className="text-gray-400 w-8 text-right">{c}x</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* Últimos eventos */}
       {eventos.length > 0 && (
         <div className="mt-2">
-          <p className="text-xs text-gray-500 font-medium mb-1">Últimos diagnósticos LLM:</p>
+          <p className="text-xs text-gray-500 font-medium mb-1">Ultimos diagnosticos LLM:</p>
           <div className="max-h-40 overflow-y-auto space-y-1">
             {[...eventos].reverse().slice(0, 5).map((ev, i) => (
               <div key={i} className="bg-gray-900 rounded p-2 text-xs border border-gray-700">
@@ -340,14 +327,13 @@ function HistorialLangGraph({ zona }) {
 
       {niveles.length === 0 && (
         <p className="text-xs text-gray-500 italic">
-          Sin ciclos registrados. Ejecuta una simulación via /orquestar_langgraph.
+          Sin ciclos registrados. Ejecuta una simulacion via /orquestar_langgraph.
         </p>
       )}
     </div>
   );
 }
 
-// ─── Panel principal ───────────────────────────────────────────────────────────
 export function LLMDiagnostico({ ultimoEvento }) {
   const [zonaSeleccionada, setZonaSeleccionada] = useState(ZONAS[0]);
 
@@ -357,26 +343,25 @@ export function LLMDiagnostico({ ultimoEvento }) {
   return (
     <div className="space-y-4">
 
-      {/* Último diagnóstico LLM del evento WebSocket */}
       {tieneLLM ? (
         <div className="bg-gray-900 rounded-xl p-4 border border-indigo-800">
           <div className="flex justify-between items-start mb-3">
-            <h2 className="font-bold text-lg">🧠 Diagnóstico LLM (Tiempo Real)</h2>
+            <h2 className="font-bold text-lg">Diagnostico LLM (Tiempo Real)</h2>
             <span className="text-xs px-2 py-1 rounded bg-indigo-800 text-indigo-200">
-              {ev.motor === "LangGraph" ? "⚡ LangGraph" : "Orquestador"}
+              {ev.motor === "LangGraph" ? "LangGraph" : "Orquestador"}
             </span>
           </div>
 
           {ev.diagnostico_llm && (
             <div className="mb-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
-              <p className="text-xs text-gray-400 font-medium mb-1">📋 Diagnóstico:</p>
+              <p className="text-xs text-gray-400 font-medium mb-1">Diagnostico:</p>
               <p className="text-sm text-gray-100 leading-relaxed">{ev.diagnostico_llm}</p>
             </div>
           )}
 
           {ev.acciones_llm?.length > 0 && (
             <div className="mb-3">
-              <p className="text-xs text-gray-400 font-medium mb-1">⚡ Acciones recomendadas:</p>
+              <p className="text-xs text-gray-400 font-medium mb-1">Acciones recomendadas:</p>
               {ev.acciones_llm.map((a, i) => (
                 <div key={i} className="flex gap-2 text-sm py-0.5">
                   <span className="text-blue-400 font-bold">{i + 1}.</span>
@@ -389,7 +374,7 @@ export function LLMDiagnostico({ ultimoEvento }) {
           {ev.referencia_llm && (
             <div className="mb-3 p-2 bg-blue-950 rounded border border-blue-800">
               <p className="text-xs text-blue-300">
-                📖 <strong>Referencia normativa:</strong> {ev.referencia_llm}
+                <strong>Referencia normativa:</strong> {ev.referencia_llm}
               </p>
             </div>
           )}
@@ -397,26 +382,25 @@ export function LLMDiagnostico({ ultimoEvento }) {
           {ev.pronostico_llm && (
             <div className="p-2 bg-orange-950 rounded border border-orange-800">
               <p className="text-xs text-orange-300">
-                🔮 <strong>Pronóstico:</strong> {ev.pronostico_llm}
+                <strong>Pronostico:</strong> {ev.pronostico_llm}
               </p>
             </div>
           )}
         </div>
       ) : (
         <div className="bg-gray-900 rounded-xl p-4 border border-gray-700">
-          <h2 className="font-bold text-lg mb-2">🧠 Diagnóstico LLM</h2>
+          <h2 className="font-bold text-lg mb-2">Diagnostico LLM</h2>
           <p className="text-sm text-gray-400">
-            Sin datos LLM todavía. Activa la simulación y usa{" "}
+            Sin datos LLM todavia. Activa la simulacion y usa{" "}
             <code className="bg-gray-800 px-1 rounded text-blue-300">/orquestar_langgraph</code>{" "}
-            para ver diagnósticos en tiempo real.
+            para ver diagnosticos en tiempo real.
           </p>
         </div>
       )}
 
-      {/* Historial LangGraph */}
       <div className="bg-gray-900 rounded-xl p-4 border border-gray-700">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold text-sm">📈 Historial LangGraph (Memoria Cíclica)</h3>
+          <h3 className="font-bold text-sm">Historial LangGraph (Memoria Ciclica)</h3>
           <select
             value={zonaSeleccionada}
             onChange={(e) => setZonaSeleccionada(e.target.value)}
@@ -430,11 +414,11 @@ export function LLMDiagnostico({ ultimoEvento }) {
         </div>
         <HistorialLangGraph zona={zonaSeleccionada} />
       </div>
+
     </div>
   );
 }
 
-// ─── Helpers de color ─────────────────────────────────────────────────────────
 function nivelColor(nivel) {
   if (nivel.includes("EVACUACIÓN")) return "bg-purple-500";
   if (nivel.includes("EMERGENCIA")) return "bg-red-500";

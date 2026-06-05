@@ -7,8 +7,8 @@ import { RiskMap }           from "./components/RiskMap";
 import { AlertPanel }        from "./components/AlertPanel";
 import { GasPanel }          from "./components/GasPanel";
 import { PrediccionesPanel } from "./components/PrediccionesPanel";
-import { LLMDiagnostico }    from "./components/LLMDiagnostico";
 import { WhatsAppChat }      from "./components/WhatsAppChat";
+import { LLMDiagnostico }    from "./components/LLMDiagnostico";
 import { useWebSocket }      from "./hooks/useWebSocket";
 import { api }               from "./services/api";
 
@@ -41,10 +41,10 @@ export default function App() {
     try {
       await api.iniciarSimulacion();
       setSimulando(true);
-      setMsgSim("Simulación iniciada");
+      setMsgSim("Simulacion iniciada");
       setTimeout(() => setMsgSim(""), 3000);
     } catch {
-      setMsgSim("Error al iniciar simulación");
+      setMsgSim("Error al iniciar simulacion");
     }
   };
 
@@ -52,12 +52,29 @@ export default function App() {
     try {
       await api.detenerSimulacion();
       setSimulando(false);
-      setMsgSim("Simulación detenida");
+      setMsgSim("Simulacion detenida");
       setTimeout(() => setMsgSim(""), 3000);
     } catch {
       setSimulando(false);
-      setMsgSim("Simulación marcada como detenida");
+      setMsgSim("Simulacion marcada como detenida");
       setTimeout(() => setMsgSim(""), 3000);
+    }
+  };
+
+  const restablecerMina = async () => {
+    if (!window.confirm("Restablecer condiciones iniciales de la mina?\nEsto borra todo el historial de lecturas y reinicia los gases a la linea base.")) return;
+    try {
+      await api.detenerSimulacion().catch(() => {});
+      setSimulando(false);
+      const r = await fetch("http://localhost:8005/reset", { method: "POST" });
+      const d = await r.json();
+      const base     = d.detalles?.agente_gases?.lecturas_base ?? 0;
+      const filas_lg = d.detalles?.orquestador?.filas_borradas ?? 0;
+      setMsgSim(`Restablecido — ${base} lecturas base cargadas, ${filas_lg} checkpoints borrados`);
+      setTimeout(() => setMsgSim(""), 4000);
+    } catch {
+      setMsgSim("Error al restablecer (verifica que el simulador este activo)");
+      setTimeout(() => setMsgSim(""), 4000);
     }
   };
 
@@ -66,16 +83,16 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-950 text-white p-3">
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
+      {/* Header */}
       <div className={`rounded-xl p-4 mb-4 ${bgHeader} transition-colors duration-700`}>
         <div className="flex flex-wrap justify-between items-center gap-2">
           <div>
             <h1 className="text-xl font-bold">
-              ⛏ Sistema Multiagente — Minería Subterránea UPTC 2026
+              Sistema Multiagente — Mineria Subterranea UPTC 2026
             </h1>
             <p className="text-xs opacity-80 mt-0.5">
               Nivel global: <strong>{nivelActual}</strong> &nbsp;|&nbsp;
-              WS: {conectado ? "🟢 Conectado" : "🔴 Desconectado"} &nbsp;|&nbsp;
+              WS: {conectado ? "Conectado" : "Desconectado"} &nbsp;|&nbsp;
               Eventos recibidos: {eventos.length}
             </p>
           </div>
@@ -90,7 +107,7 @@ export default function App() {
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed
                          px-4 py-2 rounded-lg font-bold text-sm transition-colors"
             >
-              ▶ Iniciar Simulación
+              Iniciar Simulacion
             </button>
             <button
               onClick={detenerSim}
@@ -98,19 +115,26 @@ export default function App() {
               className="bg-red-700 hover:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed
                          px-4 py-2 rounded-lg font-bold text-sm transition-colors"
             >
-              ⏹ Detener
+              Detener
+            </button>
+            <button
+              onClick={restablecerMina}
+              className="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg font-bold text-sm transition-colors"
+              title="Borra el historial y reinicia los gases a condiciones normales de linea base"
+            >
+              Restablecer
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── Tabs ───────────────────────────────────────────────────────── */}
+      {/* Tabs */}
       <div className="flex flex-wrap gap-1 mb-4 bg-gray-900 rounded-xl p-1 border border-gray-800">
         {[
-          { id: "gases",        label: "🧪 Gases" },
-          { id: "predicciones", label: "📈 LSTM" },
-          { id: "mapa",         label: "🗺 Riesgo" },
-          { id: "whatsapp",     label: "💬 Bot WhatsApp" },
+          { id: "gases",        label: "Gases" },
+          { id: "predicciones", label: "LSTM" },
+          { id: "mapa",         label: "Riesgo" },
+          { id: "whatsapp",     label: "Bot WhatsApp" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -126,7 +150,7 @@ export default function App() {
         ))}
       </div>
 
-      {/* ── Contenido ──────────────────────────────────────────────────── */}
+      {/* Contenido */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
 
         {/* TAB: Gases en tiempo real */}
@@ -137,14 +161,14 @@ export default function App() {
             </div>
             <div className="flex flex-col gap-4">
               <div className="bg-gray-900 rounded-xl p-4 border border-gray-700">
-                <h2 className="font-bold mb-3">📡 Estado Agentes</h2>
+                <h2 className="font-bold mb-3">Estado Agentes</h2>
                 {estado?.agentes
                   ? Object.entries(estado.agentes).map(([nombre, est]) => (
                     <div key={nombre}
                       className="flex justify-between py-1.5 border-b border-gray-800 text-sm">
                       <span className="text-gray-300">{nombre.replace("AGENTE_", "")}</span>
                       <span className={est === "ACTIVO" ? "text-green-400" : "text-red-400"}>
-                        {est === "ACTIVO" ? "🟢" : "🔴"} {est}
+                        {est}
                       </span>
                     </div>
                   ))
@@ -160,7 +184,7 @@ export default function App() {
 
               {ultimoEvento && (
                 <div className="bg-gray-900 rounded-xl p-4 border border-gray-700">
-                  <h2 className="font-bold mb-2">📋 Último Evento</h2>
+                  <h2 className="font-bold mb-2">Ultimo Evento</h2>
                   <p className="text-xs text-gray-400 mb-1">[{ultimoEvento.id_evento}]</p>
                   <p className="text-sm font-medium">{ultimoEvento.prediccion}</p>
                   <div className="mt-2 max-h-28 overflow-y-auto space-y-0.5">
@@ -171,7 +195,6 @@ export default function App() {
                 </div>
               )}
             </div>
-
           </>
         )}
 
@@ -182,18 +205,16 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB: Mapa de riesgo + Diagnóstico LLM */}
+        {/* TAB: Mapa de riesgo + Diagnostico LLM */}
         {tabActivo === "mapa" && (
           <>
-            {/* Fila 1: Mapa + Alertas con la misma altura */}
             <div className="lg:col-span-2">
               <RiskMap eventos={eventos} />
             </div>
-            <div className="lg:col-span-1 lg:min-h-0" style={{ height: "100%" }}>
+            <div className="lg:col-span-1" style={{ height: "620px" }}>
               <AlertPanel eventos={eventos} />
             </div>
 
-            {/* Fila 2: Diagnóstico LLM + Historial LangGraph justo debajo */}
             <div className="lg:col-span-3">
               <LLMDiagnostico ultimoEvento={ultimoEvento} />
             </div>

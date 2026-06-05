@@ -51,7 +51,7 @@ export function WhatsAppChat() {
   const [mensajes, setMensajes]  = useState([
     {
       de:    "bot",
-      texto: "⛏ *Minería Subterránea IA — UPTC 2026*\n\nEscribe tu consulta o usa un comando:\n• *estado* — riesgo actual\n• *evacuacion* — protocolo\n• *gases* — límites permisibles\n• *contactos* — ANM y emergencias",
+      texto: "*Mineria Subterranea IA — UPTC 2026*\n\nEscribe tu consulta o usa un comando:\n• *estado* — riesgo actual\n• *evacuacion* — protocolo\n• *gases* — limites permisibles\n• *contactos* — ANM y emergencias",
       hora:  new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -105,7 +105,7 @@ export function WhatsAppChat() {
         ...prev,
         {
           de:    "bot",
-          texto: "⚠️ Bot WhatsApp no disponible (puerto 8006).\nEjecuta: backend.whatsapp.app:app",
+          texto: "Bot WhatsApp no disponible (puerto 8006).\nEjecuta: backend.whatsapp.app:app",
           hora:  hora(),
         },
       ]);
@@ -123,13 +123,13 @@ export function WhatsAppChat() {
 
         {/* Header estilo WhatsApp */}
         <div className="flex items-center gap-3 p-3 bg-green-900 rounded-t-xl border-b border-green-800">
-          <div className="w-9 h-9 rounded-full bg-green-600 flex items-center justify-center font-bold">
-            ⛏
+          <div className="w-9 h-9 rounded-full bg-green-600 flex items-center justify-center font-bold text-xs">
+            IA
           </div>
           <div className="flex-1">
             <p className="font-bold text-sm">Minería IA Bot</p>
             <p className="text-xs text-green-300">
-              {botInfo?.llm_activo ? "🟢 Gemini activo" : "🟡 Modo fallback"}
+              {botInfo?.llm_activo ? "Gemini activo" : "Modo fallback"}
               {botInfo?.estado_sistema?.nivel &&
                 ` · Nivel: ${botInfo.estado_sistema.nivel}`}
             </p>
@@ -215,13 +215,13 @@ export function WhatsAppChat() {
             <div className="flex justify-between">
               <span className="text-gray-400">LLM</span>
               <span className={botInfo?.llm_activo ? "text-green-400" : "text-yellow-400"}>
-                {botInfo?.llm_activo ? "Gemini ✓" : "Fallback"}
+                {botInfo?.llm_activo ? "Gemini activo" : "Fallback"}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Twilio</span>
               <span className={botInfo?.twilio_activo ? "text-green-400" : "text-gray-500"}>
-                {botInfo?.twilio_activo ? "Activo ✓" : "Sin config"}
+                {botInfo?.twilio_activo ? "Activo" : "Sin config"}
               </span>
             </div>
             {botInfo?.estado_sistema && (

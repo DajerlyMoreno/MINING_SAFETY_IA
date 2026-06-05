@@ -99,24 +99,11 @@ async def nodo_analizar_agentes(state: EstadoMinerio) -> dict:
     """
     zona = state["zona"]
 
-    # Llamadas concurrentes a los 4 agentes
-    resp_gases, resp_imagen, resp_geo, resp_monitor = await asyncio.gather(
+    # Solo agente de gases activo; imagen y geo desactivados
+    resp_gases, resp_monitor = await asyncio.gather(
         _post(
             f"{settings.agente_gases.base_url}/analizar",
             {"zona": zona, **state.get("gases", {})},
-        ),
-        _post(
-            f"{settings.agente_imagenes.base_url}/analizar",
-            {
-                "zona": zona,
-                "deteccion":  state.get("imagen", {}).get("deteccion", "normal"),
-                "confianza":  state.get("imagen", {}).get("confianza", 0.9),
-                "n_personas": state.get("imagen", {}).get("n_personas", 0),
-            },
-        ),
-        _post(
-            f"{settings.agente_geomecanico.base_url}/analizar",
-            {"zona": zona, **state.get("geo", {})},
         ),
         _post(
             f"{settings.agente_monitor.base_url}/estado",
@@ -127,8 +114,8 @@ async def nodo_analizar_agentes(state: EstadoMinerio) -> dict:
 
     return {
         "resp_gases":   _to_native(resp_gases),
-        "resp_imagen":  _to_native(resp_imagen),
-        "resp_geo":     _to_native(resp_geo),
+        "resp_imagen":  None,
+        "resp_geo":     None,
         "resp_monitor": _to_native(resp_monitor),
     }
 
@@ -218,9 +205,8 @@ async def nodo_razonar_llm(state: EstadoMinerio) -> dict:
     Si el LLM no está disponible, usa fallback de plantilla.
     """
     lecturas = {
-        "Gases":       state.get("gases", {}),
-        "Geomecánica": state.get("geo", {}),
-        "Visual":      state.get("imagen", {}),
+        "gases": state.get("gases", {}),
+        "geo":   state.get("geo", {}),
     }
     resultado = await llm.razonar_diagnostico(
         zona=state["zona"],

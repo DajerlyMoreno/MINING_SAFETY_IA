@@ -4,7 +4,7 @@
  * Estrategia de datos (doble fuente, sin dependencia exclusiva del WebSocket):
  *   1. Polling directo al Agente de Gases (:8001/historial/{zona}) cada 4 s.
  *   2. Si llega un evento por WebSocket (prop ultimoEvento), se prioriza porque
- *      es más reciente y ya viene procesado por el orquestador.
+ *      es mas reciente y ya viene procesado por el orquestador.
  */
 
 import React, { useState, useEffect, useRef } from "react";
@@ -13,17 +13,17 @@ const AGENTE_GAS = import.meta.env.VITE_AGENTE_GAS || "http://localhost:8001";
 const ZONAS = ["Frente_A_Sogamoso", "Frente_B_Mongua", "Galeria_Central", "Bocamina"];
 const GASES = ["CH4", "CO", "CO2", "O2", "H2S"];
 
-// ─── Umbrales y artículos del Decreto 1886/2015 ───────────────────────────────
+// Umbrales y articulos del Decreto 1886/2015
 const DECRETO = {
   CH4: {
-    nombre: "Metano (CH₄)", unidad: "%",
+    nombre: "Metano (CH4)", unidad: "%",
     niveles: [
       { umbral: 1.5, nivel: "EVACUACIÓN INMEDIATA", articulo: "Art. 65",
-        descripcion: "CH₄ ≥ 1.5 %: riesgo de explosión inminente. Evacuación total obligatoria." },
+        descripcion: "CH4 >= 1.5 %: riesgo de explosion inminente. Evacuacion total obligatoria." },
       { umbral: 1.0, nivel: "EMERGENCIA", articulo: "Art. 65",
-        descripcion: "CH₄ ≥ 1.0 %: suspender actividades y activar ventilación de emergencia." },
+        descripcion: "CH4 >= 1.0 %: suspender actividades y activar ventilacion de emergencia." },
       { umbral: 0.5, nivel: "PRECAUCIÓN", articulo: "Art. 64",
-        descripcion: "CH₄ ≥ 0.5 %: notificar jefe de turno y aumentar caudal de ventilación." },
+        descripcion: "CH4 >= 0.5 %: notificar jefe de turno y aumentar caudal de ventilacion." },
     ],
     normal: "< 0.5 %  (Art. 64)",
     maxBarra: 2.0,
@@ -32,50 +32,50 @@ const DECRETO = {
     nombre: "Monóxido de Carbono (CO)", unidad: "ppm",
     niveles: [
       { umbral: 100, nivel: "EMERGENCIA", articulo: "Art. 66",
-        descripcion: "CO ≥ 100 ppm: riesgo de intoxicación grave. Evacuar el frente." },
+        descripcion: "CO >= 100 ppm: riesgo de intoxicacion grave. Evacuar el frente." },
       { umbral: 50, nivel: "RIESGO ALTO", articulo: "Art. 66",
-        descripcion: "CO ≥ 50 ppm: TLV-TWA superado. Preparar auto-rescatadores." },
+        descripcion: "CO >= 50 ppm: TLV-TWA superado. Preparar auto-rescatadores." },
       { umbral: 25, nivel: "PRECAUCIÓN", articulo: "Art. 66",
-        descripcion: "CO ≥ 25 ppm: advertencia temprana. Verificar fuentes de combustión." },
+        descripcion: "CO >= 25 ppm: advertencia temprana. Verificar fuentes de combustion." },
     ],
     normal: "< 25 ppm  (Art. 66)",
     maxBarra: 150,
   },
   CO2: {
-    nombre: "Dióxido de Carbono (CO₂)", unidad: "%",
+    nombre: "Dióxido de Carbono (CO2)", unidad: "%",
     niveles: [
       { umbral: 1.5, nivel: "EMERGENCIA", articulo: "Art. 67",
-        descripcion: "CO₂ ≥ 1.5 %: riesgo de asfixia. Evacuar inmediatamente." },
+        descripcion: "CO2 >= 1.5 %: riesgo de asfixia. Evacuar inmediatamente." },
       { umbral: 1.0, nivel: "RIESGO ALTO", articulo: "Art. 67",
-        descripcion: "CO₂ ≥ 1.0 %: ventilación insuficiente. Activar sistemas auxiliares." },
+        descripcion: "CO2 >= 1.0 %: ventilacion insuficiente. Activar sistemas auxiliares." },
       { umbral: 0.5, nivel: "PRECAUCIÓN", articulo: "Art. 67",
-        descripcion: "CO₂ ≥ 0.5 %: incremento anormal. Revisar ventilación principal." },
+        descripcion: "CO2 >= 0.5 %: incremento anormal. Revisar ventilacion principal." },
     ],
     normal: "< 0.5 %  (Art. 67)",
     maxBarra: 2.0,
   },
   O2: {
-    nombre: "Oxígeno (O₂)", unidad: "%",
+    nombre: "Oxígeno (O2)", unidad: "%",
     niveles: [
       { umbral: 16.0, nivel: "EVACUACIÓN INMEDIATA", articulo: "Art. 68", comparador: "<",
-        descripcion: "O₂ < 16.0 %: peligro inmediato de vida. Evacuar con equipo autónomo." },
+        descripcion: "O2 < 16.0 %: peligro inmediato de vida. Evacuar con equipo autonomo." },
       { umbral: 17.0, nivel: "EMERGENCIA", articulo: "Art. 68", comparador: "<",
-        descripcion: "O₂ < 17.0 %: deficiencia severa. Activar brigada de rescate." },
+        descripcion: "O2 < 17.0 %: deficiencia severa. Activar brigada de rescate." },
       { umbral: 19.5, nivel: "PRECAUCIÓN", articulo: "Art. 68", comparador: "<",
-        descripcion: "O₂ < 19.5 %: deficiencia de oxígeno. Aumentar ventilación." },
+        descripcion: "O2 < 19.5 %: deficiencia de oxigeno. Aumentar ventilacion." },
     ],
     normal: "19.5 – 23.0 %  (Art. 68)",
     maxBarra: 25,
   },
   H2S: {
-    nombre: "Sulfuro de Hidrógeno (H₂S)", unidad: "ppm",
+    nombre: "Sulfuro de Hidrógeno (H2S)", unidad: "ppm",
     niveles: [
       { umbral: 20, nivel: "EMERGENCIA", articulo: "Art. 69",
-        descripcion: "H₂S ≥ 20 ppm: gas muy tóxico. Evacuación inmediata con equipo autónomo." },
+        descripcion: "H2S >= 20 ppm: gas muy toxico. Evacuacion inmediata con equipo autonomo." },
       { umbral: 10, nivel: "RIESGO ALTO", articulo: "Art. 69",
-        descripcion: "H₂S ≥ 10 ppm: TLV-TWA superado. Suspender actividades en el área." },
+        descripcion: "H2S >= 10 ppm: TLV-TWA superado. Suspender actividades en el area." },
       { umbral: 1, nivel: "PRECAUCIÓN", articulo: "Art. 69",
-        descripcion: "H₂S ≥ 1 ppm: olor detectado. Verificar origen e incrementar ventilación." },
+        descripcion: "H2S >= 1 ppm: olor detectado. Verificar origen e incrementar ventilacion." },
     ],
     normal: "< 1 ppm  (Art. 69)",
     maxBarra: 30,
@@ -99,13 +99,11 @@ const NIVEL_BG = {
   PRECAUCIÓN:             "bg-yellow-950 border-yellow-600",
 };
 
-// ─── Tarjeta individual ───────────────────────────────────────────────────────
 function TarjetaGas({ gas, valor }) {
-  const def   = DECRETO[gas];
+  const def    = DECRETO[gas];
   const alerta = evaluarGas(gas, valor);
-  const bg    = alerta ? (NIVEL_BG[alerta.nivel] || "bg-gray-800 border-gray-700") : "bg-gray-800 border-gray-700";
+  const bg     = alerta ? (NIVEL_BG[alerta.nivel] || "bg-gray-800 border-gray-700") : "bg-gray-800 border-gray-700";
 
-  // Barra de nivel
   const pct = def
     ? Math.min(100, Math.max(0, (valor / def.maxBarra) * 100))
     : 0;
@@ -116,19 +114,17 @@ function TarjetaGas({ gas, valor }) {
 
   return (
     <div className={`rounded-lg border p-3 transition-colors duration-500 ${bg}`}>
-      {/* Cabecera */}
       <div className="flex justify-between items-start gap-2">
         <span className="text-xs text-gray-400 font-medium leading-tight">
           {def?.nombre || gas}
         </span>
         {alerta && (
           <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-red-800 text-red-200">
-            ⚠ {alerta.nivel}
+            {alerta.nivel}
           </span>
         )}
       </div>
 
-      {/* Valor numérico */}
       <div className="mt-1 flex items-baseline gap-1">
         <span className="text-2xl font-bold tabular-nums">
           {typeof valor === "number"
@@ -138,7 +134,6 @@ function TarjetaGas({ gas, valor }) {
         <span className="text-sm text-gray-400">{def?.unidad}</span>
       </div>
 
-      {/* Barra */}
       <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1.5">
         <div
           className={`h-1.5 rounded-full transition-all duration-700 ${barColor}`}
@@ -146,20 +141,18 @@ function TarjetaGas({ gas, valor }) {
         />
       </div>
 
-      {/* Explicación decreto o estado normal */}
       {alerta ? (
         <div className="mt-2 text-xs bg-black/30 rounded p-2 leading-relaxed text-gray-200">
           <span className="font-bold text-yellow-300">{alerta.articulo}: </span>
           {alerta.descripcion}
         </div>
       ) : (
-        <p className="text-xs text-green-400 mt-1.5">✓ Normal — {def?.normal}</p>
+        <p className="text-xs text-green-400 mt-1.5">Normal — {def?.normal}</p>
       )}
     </div>
   );
 }
 
-// ─── Tabla de últimas lecturas ────────────────────────────────────────────────
 const UMBRALES_COLOR = {
   CH4: (v) => v >= 1.5 ? "text-red-400" : v >= 0.5 ? "text-yellow-400" : "text-green-400",
   CO:  (v) => v >= 100  ? "text-red-400" : v >= 25  ? "text-yellow-400" : "text-green-400",
@@ -187,7 +180,7 @@ function TablaHistorial({ zona }) {
   }, [zona]);
 
   if (filas.length === 0)
-    return <p className="text-xs text-gray-500 italic mt-2">Sin historial disponible todavía.</p>;
+    return <p className="text-xs text-gray-500 italic mt-2">Sin historial disponible todavia.</p>;
 
   return (
     <div className="overflow-x-auto mt-3">
@@ -195,11 +188,11 @@ function TablaHistorial({ zona }) {
         <thead>
           <tr className="border-b border-gray-700 text-gray-400">
             <th className="text-left pb-1 pr-2 font-medium">#</th>
-            <th className="text-right pb-1 px-2 font-medium">CH₄ %</th>
+            <th className="text-right pb-1 px-2 font-medium">CH4 %</th>
             <th className="text-right pb-1 px-2 font-medium">CO ppm</th>
-            <th className="text-right pb-1 px-2 font-medium">CO₂ %</th>
-            <th className="text-right pb-1 px-2 font-medium">O₂ %</th>
-            <th className="text-right pb-1 pl-2 font-medium">H₂S ppm</th>
+            <th className="text-right pb-1 px-2 font-medium">CO2 %</th>
+            <th className="text-right pb-1 px-2 font-medium">O2 %</th>
+            <th className="text-right pb-1 pl-2 font-medium">H2S ppm</th>
           </tr>
         </thead>
         <tbody>
@@ -223,22 +216,19 @@ function TablaHistorial({ zona }) {
   );
 }
 
-// ─── Panel principal ──────────────────────────────────────────────────────────
 export function GasPanel({ ultimoEvento }) {
   const [zonaSeleccionada, setZonaSeleccionada] = useState(ZONAS[0]);
-  const [lecturas,  setLecturas]  = useState(null);   // valores { CH4, CO, CO2, O2, H2S }
+  const [lecturas,  setLecturas]  = useState(null);
   const [zona,      setZona]      = useState("—");
   const [nivel,     setNivel]     = useState("—");
   const [timestamp, setTimestamp] = useState("—");
-  const [fuente,    setFuente]    = useState("polling"); // "websocket" | "polling"
+  const [fuente,    setFuente]    = useState("polling");
   const [error,     setError]     = useState(null);
   const intervalRef = useRef(null);
 
-  // ── 1. Prioridad: datos del WebSocket ────────────────────────────────────────
+  // 1. Prioridad: datos del WebSocket
   useEffect(() => {
     if (!ultimoEvento) return;
-
-    // El evento llega como msg.datos desde el orquestador
     const gasData = ultimoEvento.datos_gases || null;
     if (gasData && typeof gasData === "object") {
       setLecturas(gasData);
@@ -254,7 +244,7 @@ export function GasPanel({ ultimoEvento }) {
     }
   }, [ultimoEvento]);
 
-  // ── 2. Fallback: polling directo al Agente de Gases ──────────────────────────
+  // 2. Fallback: polling directo al Agente de Gases
   const fetchHistorial = async (z) => {
     try {
       const resp = await fetch(`${AGENTE_GAS}/historial/${z}?n=1`);
@@ -268,7 +258,6 @@ export function GasPanel({ ultimoEvento }) {
         setTimestamp(new Date().toLocaleTimeString("es-CO"));
         setFuente("polling");
         setError(null);
-        // Estimar nivel desde los gases
         const alertas = GASES.map((g) => evaluarGas(g, ultima[g])).filter(Boolean);
         if (alertas.length === 0) setNivel("SEGURO");
         else {
@@ -284,7 +273,6 @@ export function GasPanel({ ultimoEvento }) {
     }
   };
 
-  // Arrancar polling al montar y al cambiar zona
   useEffect(() => {
     fetchHistorial(zonaSeleccionada);
     intervalRef.current = setInterval(() => fetchHistorial(zonaSeleccionada), 4000);
@@ -292,30 +280,26 @@ export function GasPanel({ ultimoEvento }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zonaSeleccionada]);
 
-  // Si llegan datos por WebSocket de otra zona, no anular la zona seleccionada
-  // pero sí mostrarlos si coincide
   const alertasActivas = lecturas
     ? GASES.map((g) => evaluarGas(g, lecturas[g])).filter(Boolean)
     : [];
 
-  // ── Render: sin datos todavía ─────────────────────────────────────────────
   if (!lecturas) {
     return (
       <div className="bg-gray-900 rounded-xl p-4 border border-gray-700">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="font-bold text-lg">🧪 Lectura Actual de Gases</h2>
+          <h2 className="font-bold text-lg">Lectura Actual de Gases</h2>
           <ZonaSelector value={zonaSeleccionada} onChange={setZonaSeleccionada} />
         </div>
         {error ? (
           <div className="bg-red-950 border border-red-800 rounded-lg p-3 text-sm text-red-300">
-            ⚠ {error}
+            {error}
             <p className="text-xs mt-1 text-red-400">
-              Asegúrate de que el Agente de Gases esté corriendo en el puerto 8001.
+              Asegurate de que el Agente de Gases este corriendo en el puerto 8001.
             </p>
           </div>
         ) : (
           <div className="text-center py-8">
-            <div className="animate-spin text-3xl mb-3">⏳</div>
             <p className="text-gray-400 text-sm">Cargando lecturas de {zonaSeleccionada.replace(/_/g, " ")}…</p>
             <p className="text-gray-600 text-xs mt-1">
               Conectando al Agente de Gases (puerto 8001)
@@ -326,25 +310,22 @@ export function GasPanel({ ultimoEvento }) {
     );
   }
 
-  // ── Render: con datos ─────────────────────────────────────────────────────
   return (
     <div className="bg-gray-900 rounded-xl p-4 border border-gray-700">
-      {/* Cabecera */}
       <div className="flex justify-between items-center mb-3 gap-2 flex-wrap">
-        <h2 className="font-bold text-lg">🧪 Lectura Actual de Gases</h2>
+        <h2 className="font-bold text-lg">Lectura Actual de Gases</h2>
         <div className="flex items-center gap-3">
           <ZonaSelector value={zonaSeleccionada} onChange={setZonaSeleccionada} />
           <div className="text-right text-xs text-gray-400">
-            <p>📍 {zona}</p>
-            <p>🕐 {timestamp}</p>
+            <p>{zona}</p>
+            <p>{timestamp}</p>
             <p className={fuente === "websocket" ? "text-green-400" : "text-blue-400"}>
-              {fuente === "websocket" ? "🔴 En vivo (WS)" : "🔄 Polling"}
+              {fuente === "websocket" ? "En vivo (WS)" : "Polling"}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Badge nivel global */}
       <div className={`rounded-lg px-3 py-1.5 text-center text-sm font-bold mb-3 ${
         nivel.includes("EVACUACIÓN") ? "bg-purple-800 text-purple-100" :
         nivel.includes("EMERGENCIA") ? "bg-red-800 text-red-100"       :
@@ -355,17 +336,15 @@ export function GasPanel({ ultimoEvento }) {
         Nivel de riesgo: <strong>{nivel}</strong>
       </div>
 
-      {/* Tarjetas de gases */}
       <div className="grid grid-cols-1 gap-2">
         {GASES.map((g) => (
           <TarjetaGas key={g} gas={g} valor={lecturas[g] ?? 0} />
         ))}
       </div>
 
-      {/* Últimas 10 lecturas */}
       <div className="mt-3 border-t border-gray-700 pt-3">
         <p className="text-xs text-gray-400 font-semibold mb-1">
-          📋 Últimas 10 lecturas — {zonaSeleccionada.replace(/_/g, " ")}
+          Ultimas 10 lecturas — {zonaSeleccionada.replace(/_/g, " ")}
         </p>
         <TablaHistorial zona={zonaSeleccionada} />
       </div>
@@ -373,7 +352,6 @@ export function GasPanel({ ultimoEvento }) {
   );
 }
 
-// ─── Selector de zona ─────────────────────────────────────────────────────────
 function ZonaSelector({ value, onChange }) {
   return (
     <select

@@ -145,16 +145,16 @@ if (-not $SinFrontend -and -not $SoloBackend) {
     $frontendPath = Join-Path $ROOT "frontend"
     if (Test-Path (Join-Path $frontendPath "package.json")) {
         if (-not (Test-Path (Join-Path $frontendPath "node_modules"))) {
-            Write-Info "Instalando dependencias npm..."
-            Push-Location $frontendPath; npm install; Pop-Location
+            Write-Info "Instalando dependencias pnpm..."
+            Push-Location $frontendPath; pnpm install; Pop-Location
         }
-        $fCmd = "cd '$frontendPath'; npm run dev -- --port 3000; Read-Host"
+        $fCmd = "cd '$frontendPath'; pnpm run dev -- --port 3000; Read-Host"
         Start-Process powershell -ArgumentList "-NoExit", "-Command", $fCmd -WindowStyle Normal
         Write-Ok "Dashboard React iniciado (3000)"
     } else {
         Write-Info "frontend\package.json no encontrado."
         Write-Host "       Para crear el frontend ejecuta:" -ForegroundColor Gray
-        Write-Host "       cd frontend; npm create vite@latest . -- --template react; npm install" -ForegroundColor Yellow
+        Write-Host "       cd frontend; pnpm create vite@latest . -- --template react; pnpm install" -ForegroundColor Yellow
     }
 } else {
     Write-Info "Frontend omitido."

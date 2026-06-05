@@ -1,8 +1,8 @@
 /**
- * PrediccionesPanel.jsx — Predicciones LSTM automáticas del Agente de Gases.
+ * PrediccionesPanel.jsx — Predicciones LSTM automaticas del Agente de Gases.
  *
- * Cada 30 s toma la última lectura del historial del Agente de Gases y
- * llama a /analizar para obtener las predicciones de los próximos 90 min.
+ * Cada 30 s toma la ultima lectura del historial del Agente de Gases y
+ * llama a /analizar para obtener las predicciones de los proximos 90 min.
  * Si no hay suficiente historial (< 24 lecturas) lo indica claramente.
  */
 
@@ -12,10 +12,9 @@ const AGENTE_GAS = import.meta.env.VITE_AGENTE_GAS || "http://localhost:8001";
 const ZONAS = ["Frente_A_Sogamoso", "Frente_B_Mongua", "Galeria_Central", "Bocamina"];
 const GASES = ["CH4", "CO", "CO2", "O2", "H2S"];
 
-// Umbrales mínimos para colorear celdas de predicción
 const UMBRAL_ALERTA = {
   CH4: 0.5, CO: 25, CO2: 0.5, H2S: 1,
-  O2_MIN: 19.5,   // O2 alerta si cae por debajo
+  O2_MIN: 19.5,
 };
 
 function colorCelda(gas, valor) {
@@ -27,9 +26,9 @@ function colorCelda(gas, valor) {
   }
   const umbral = UMBRAL_ALERTA[gas];
   if (!umbral) return "text-gray-300";
-  if (valor >= umbral * 3) return "text-red-400 font-bold";
+  if (valor >= umbral * 3)   return "text-red-400 font-bold";
   if (valor >= umbral * 1.5) return "text-orange-400 font-bold";
-  if (valor >= umbral) return "text-yellow-400 font-semibold";
+  if (valor >= umbral)       return "text-yellow-400 font-semibold";
   return "text-green-400";
 }
 
@@ -40,7 +39,6 @@ function fmt(gas, valor) {
     : String(valor);
 }
 
-// Mini barra horizontal proporcional al umbral
 function MiniBarra({ gas, valor }) {
   const maxes = { CH4: 2, CO: 150, CO2: 2, O2: 25, H2S: 30 };
   const max = maxes[gas] || 100;
@@ -57,15 +55,14 @@ function MiniBarra({ gas, valor }) {
 }
 
 export function PrediccionesPanel({ zona: zonaWS }) {
-  const [zona,          setZona]          = useState(zonaWS || ZONAS[0]);
-  const [predicciones,  setPredicciones]  = useState([]);  // array de 6 pasos
-  const [estado,        setEstado]        = useState("idle"); // idle | cargando | ok | sin_historial | sin_modelo | error
-  const [ultimaActualiz,setUltimaActualiz]= useState(null);
-  const [lecturaBase,   setLecturaBase]   = useState(null);
-  const [historialCount,setHistorialCount]= useState(0);
+  const [zona,           setZona]           = useState(zonaWS || ZONAS[0]);
+  const [predicciones,   setPredicciones]   = useState([]);
+  const [estado,         setEstado]         = useState("idle");
+  const [ultimaActualiz, setUltimaActualiz] = useState(null);
+  const [lecturaBase,    setLecturaBase]    = useState(null);
+  const [historialCount, setHistorialCount] = useState(0);
   const timerRef = useRef(null);
 
-  // Si la zona cambia por WebSocket, sincronizar
   useEffect(() => {
     if (zonaWS && zonaWS !== zona) setZona(zonaWS);
   }, [zonaWS]);
@@ -73,7 +70,6 @@ export function PrediccionesPanel({ zona: zonaWS }) {
   const cargarPredicciones = useCallback(async (z) => {
     setEstado("cargando");
     try {
-      // 1. Obtener última lectura del historial
       const histResp = await fetch(`${AGENTE_GAS}/historial/${z}?n=1`);
       if (!histResp.ok) throw new Error(`HTTP ${histResp.status} en /historial`);
       const histData = await histResp.json();
@@ -85,7 +81,6 @@ export function PrediccionesPanel({ zona: zonaWS }) {
         return;
       }
 
-      // 2. Obtener conteo real del historial para saber si LSTM puede predecir
       const histFullResp = await fetch(`${AGENTE_GAS}/historial/${z}?n=500`);
       if (histFullResp.ok) {
         const fullData = await histFullResp.json();
@@ -102,7 +97,6 @@ export function PrediccionesPanel({ zona: zonaWS }) {
       const ultima = lista[lista.length - 1];
       setLecturaBase(ultima);
 
-      // 3. Llamar a /analizar con esa lectura
       const analResp = await fetch(`${AGENTE_GAS}/analizar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,7 +120,6 @@ export function PrediccionesPanel({ zona: zonaWS }) {
       if (preds.length > 0) {
         setEstado("ok");
       } else {
-        // Hay historial suficiente pero el modelo LSTM no está entrenado/cargado
         setEstado("sin_modelo");
       }
     } catch (e) {
@@ -135,14 +128,12 @@ export function PrediccionesPanel({ zona: zonaWS }) {
     }
   }, []);
 
-  // Arrancar y refrescar cada 30 s
   useEffect(() => {
     cargarPredicciones(zona);
     timerRef.current = setInterval(() => cargarPredicciones(zona), 30_000);
     return () => clearInterval(timerRef.current);
   }, [zona, cargarPredicciones]);
 
-  // ── Construir filas de la tabla: columnas = pasos, filas = gases ─────────────
   const pasos = Array.from({ length: 6 }, (_, i) => {
     const minutos = (i + 1) * 15;
     const hora = new Date(Date.now() + minutos * 60_000)
@@ -151,19 +142,16 @@ export function PrediccionesPanel({ zona: zonaWS }) {
     return { minutos, hora, pred };
   });
 
-  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="bg-gray-900 rounded-xl p-4 border border-gray-700">
-      {/* Cabecera */}
       <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
         <div>
-          <h2 className="font-bold text-lg">📈 Predicciones LSTM</h2>
+          <h2 className="font-bold text-lg">Predicciones LSTM</h2>
           <p className="text-xs text-gray-400">
-            Próximos 90 min · 6 pasos × 15 min
+            Proximos 90 min · 6 pasos x 15 min
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Selector de zona */}
           <select
             value={zona}
             onChange={(e) => setZona(e.target.value)}
@@ -174,35 +162,31 @@ export function PrediccionesPanel({ zona: zonaWS }) {
               <option key={z} value={z}>{z.replace(/_/g, " ")}</option>
             ))}
           </select>
-          {/* Botón refrescar */}
           <button
             onClick={() => cargarPredicciones(zona)}
             disabled={estado === "cargando"}
             className="text-xs bg-gray-800 hover:bg-gray-700 border border-gray-600
                        px-2 py-1 rounded-lg disabled:opacity-50"
           >
-            {estado === "cargando" ? "⏳" : "🔄"}
+            {estado === "cargando" ? "..." : "Refrescar"}
           </button>
         </div>
       </div>
 
-      {/* ── Estado: error ── */}
       {estado === "error" && (
         <div className="bg-red-950 border border-red-800 rounded-lg p-3 text-sm text-red-300">
-          ⚠ No se pudo conectar al Agente de Gases (puerto 8001).
+          No se pudo conectar al Agente de Gases (puerto 8001).
           <p className="text-xs mt-1 text-red-400">
-            Verifica que el agente esté corriendo: <code>uvicorn backend.agentes.gases.app:app --port 8001</code>
+            Verifica que el agente este corriendo: <code>uvicorn backend.agentes.gases.app:app --port 8001</code>
           </p>
         </div>
       )}
 
-      {/* ── Estado: modelo LSTM no entrenado ── */}
       {estado === "sin_modelo" && (
         <div className="space-y-3">
-          {/* Aviso principal */}
           <div className="bg-blue-950 border border-blue-700 rounded-lg p-4">
             <p className="text-sm font-bold text-blue-300 mb-1">
-              🤖 Modelos LSTM no entrenados aún
+              Modelos LSTM no entrenados aun
             </p>
             <p className="text-xs text-blue-200 leading-relaxed">
               Hay <strong>{historialCount} lecturas</strong> en el historial (suficiente para predecir),
@@ -211,19 +195,18 @@ export function PrediccionesPanel({ zona: zonaWS }) {
             </p>
           </div>
 
-          {/* Mientras tanto: mostrar tendencia con los datos reales */}
           {lecturaBase && (
             <div className="bg-gray-800 rounded-lg p-3">
               <p className="text-xs text-gray-400 font-semibold mb-2">
-                📊 Última lectura disponible (base para tendencia):
+                Ultima lectura disponible (base para tendencia):
               </p>
               <div className="grid grid-cols-5 gap-2">
                 {[
-                  { g: "CH4", label: "CH₄", unit: "%",   val: lecturaBase.CH4 },
+                  { g: "CH4", label: "CH4", unit: "%",   val: lecturaBase.CH4 },
                   { g: "CO",  label: "CO",  unit: "ppm", val: lecturaBase.CO  },
-                  { g: "CO2", label: "CO₂", unit: "%",   val: lecturaBase.CO2 },
-                  { g: "O2",  label: "O₂",  unit: "%",   val: lecturaBase.O2  },
-                  { g: "H2S", label: "H₂S", unit: "ppm", val: lecturaBase.H2S },
+                  { g: "CO2", label: "CO2", unit: "%",   val: lecturaBase.CO2 },
+                  { g: "O2",  label: "O2",  unit: "%",   val: lecturaBase.O2  },
+                  { g: "H2S", label: "H2S", unit: "ppm", val: lecturaBase.H2S },
                 ].map(({ g, label, unit, val }) => (
                   <div key={g} className="text-center bg-gray-700 rounded p-2">
                     <p className="text-xs text-gray-400">{label}</p>
@@ -237,22 +220,21 @@ export function PrediccionesPanel({ zona: zonaWS }) {
             </div>
           )}
 
-          {/* Instrucciones para entrenar */}
           <div className="bg-gray-800 rounded-lg p-3 text-xs text-gray-400">
             <p className="font-semibold text-gray-300 mb-1">
-              ¿Por qué no aparecen predicciones?
+              Por que no aparecen predicciones?
             </p>
             <p className="mb-1">
-              Los modelos están en{" "}
+              Los modelos estan en{" "}
               <code className="bg-gray-700 px-1 rounded">modelos_reparados/gases/</code>{" "}
               pero TensorFlow puede no estar instalado o los modelos tienen un formato incompatible.
             </p>
-            <p className="font-semibold text-gray-300 mt-2 mb-1">Diagnóstico rápido:</p>
+            <p className="font-semibold text-gray-300 mt-2 mb-1">Diagnostico rapido:</p>
             <p className="mb-1">
               Abre <code className="bg-gray-700 px-1 rounded">http://localhost:8001/predictor/status</code>{" "}
               en el navegador para ver el estado exacto del predictor.
             </p>
-            <p className="font-semibold text-gray-300 mt-2 mb-1">Si TensorFlow no está instalado:</p>
+            <p className="font-semibold text-gray-300 mt-2 mb-1">Si TensorFlow no esta instalado:</p>
             <p className="text-gray-500 ml-2">pip install tensorflow</p>
             <p className="font-semibold text-gray-300 mt-2 mb-1">Si los modelos son incompatibles:</p>
             <p className="text-gray-500 ml-2">
@@ -263,11 +245,9 @@ export function PrediccionesPanel({ zona: zonaWS }) {
         </div>
       )}
 
-      {/* ── Estado: sin historial suficiente ── */}
       {estado === "sin_historial" && (
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 text-center">
-          <p className="text-4xl mb-2">📊</p>
-          <p className="text-sm text-gray-300 font-medium">
+          <p className="text-sm text-gray-300 font-medium mt-2">
             Historial insuficiente para predecir
           </p>
           <p className="text-xs text-gray-500 mt-1">
@@ -287,28 +267,24 @@ export function PrediccionesPanel({ zona: zonaWS }) {
             </div>
           )}
           <p className="text-xs text-blue-400 mt-2">
-            Inicia la simulación para acumular historial (~6 min a 15 s/ciclo)
+            Inicia la simulacion para acumular historial (~6 min a 15 s/ciclo)
           </p>
           {lecturaBase && (
             <p className="text-xs text-gray-500 mt-1">
-              Última lectura disponible: CH₄={lecturaBase.CH4?.toFixed(3)}% · CO={lecturaBase.CO?.toFixed(1)} ppm
+              Ultima lectura: CH4={lecturaBase.CH4?.toFixed(3)}% · CO={lecturaBase.CO?.toFixed(1)} ppm
             </p>
           )}
         </div>
       )}
 
-      {/* ── Estado: cargando primera vez ── */}
       {estado === "cargando" && predicciones.length === 0 && (
         <div className="text-center py-6">
-          <div className="animate-spin text-2xl mb-2">⏳</div>
-          <p className="text-gray-400 text-sm">Consultando predicciones…</p>
+          <p className="text-gray-400 text-sm">Consultando predicciones...</p>
         </div>
       )}
 
-      {/* ── Estado: predicciones disponibles ── */}
       {estado === "ok" && predicciones.length > 0 && (
         <>
-          {/* Tabla de predicciones */}
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
@@ -326,11 +302,11 @@ export function PrediccionesPanel({ zona: zonaWS }) {
                 {GASES.map((gas) => (
                   <tr key={gas} className="border-b border-gray-800">
                     <td className="py-2 pr-3 text-gray-300 font-medium whitespace-nowrap">
-                      {gas === "CH4" ? "CH₄ (%)" :
+                      {gas === "CH4" ? "CH4 (%)" :
                        gas === "CO"  ? "CO (ppm)" :
-                       gas === "CO2" ? "CO₂ (%)" :
-                       gas === "O2"  ? "O₂ (%)" :
-                                       "H₂S (ppm)"}
+                       gas === "CO2" ? "CO2 (%)" :
+                       gas === "O2"  ? "O2 (%)" :
+                                       "H2S (ppm)"}
                     </td>
                     {pasos.map(({ minutos, pred }) => {
                       const val = pred?.gases_predichos?.[gas] ?? null;
@@ -345,7 +321,6 @@ export function PrediccionesPanel({ zona: zonaWS }) {
                     })}
                   </tr>
                 ))}
-                {/* Fila de nivel predicho */}
                 <tr>
                   <td className="pt-2 pr-3 text-gray-400 font-medium text-xs">Nivel</td>
                   {pasos.map(({ minutos, pred }) => {
@@ -374,11 +349,10 @@ export function PrediccionesPanel({ zona: zonaWS }) {
             </table>
           </div>
 
-          {/* Alertas predictivas destacadas */}
           {predicciones.some((p) => p.alertas && p.alertas.length > 0) && (
             <div className="mt-3 bg-orange-950 border border-orange-700 rounded-lg p-3">
               <p className="text-xs font-bold text-orange-300 mb-1">
-                ⚠ Alertas predictivas detectadas:
+                Alertas predictivas detectadas:
               </p>
               {predicciones.map((p, i) =>
                 p.alertas && p.alertas.length > 0 ? (
@@ -390,12 +364,11 @@ export function PrediccionesPanel({ zona: zonaWS }) {
             </div>
           )}
 
-          {/* Pie con lectura base y timestamp */}
           <div className="mt-3 flex justify-between text-xs text-gray-600">
             <span>
               Base:{" "}
               {lecturaBase
-                ? `CH₄=${lecturaBase.CH4?.toFixed(3)}% · CO=${lecturaBase.CO?.toFixed(1)} ppm`
+                ? `CH4=${lecturaBase.CH4?.toFixed(3)}% · CO=${lecturaBase.CO?.toFixed(1)} ppm`
                 : "–"}
             </span>
             <span>Actualizado: {ultimaActualiz}</span>

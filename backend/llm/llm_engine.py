@@ -130,7 +130,9 @@ class LLMEngine:
         Retorna dict con diagnostico, acciones_llm, referencia, pronostico.
         """
         if not self.operativo:
-            return self._fallback_diagnostico(zona, nivel_riesgo, correlaciones)
+            return self._fallback_diagnostico(
+                zona, nivel_riesgo, correlaciones, lecturas, historial_niveles
+            )
 
         normativa_txt = "\n".join(
             f"• {d['titulo']}: {d.get('contenido', '')[:200]}"
@@ -165,7 +167,9 @@ class LLMEngine:
         except Exception as e:
             self._ultimo_error = str(e)
             log.error(f"Error Gemini en diagnóstico: {e}")
-            return self._fallback_diagnostico(zona, nivel_riesgo, correlaciones)
+            return self._fallback_diagnostico(
+                zona, nivel_riesgo, correlaciones, lecturas, historial_niveles
+            )
 
     # ── Consulta de lenguaje natural ───────────────────────────────────────────
 
@@ -208,26 +212,176 @@ class LLMEngine:
     # ── Fallback ───────────────────────────────────────────────────────────────
 
     def _fallback_diagnostico(
-        self, zona: str, nivel: str, correlaciones: list[str]
+        self,
+        zona: str,
+        nivel: str,
+        correlaciones: list[str],
+        lecturas: dict = None,
+        historial_niveles: list[str] = None,
     ) -> dict:
-        corr = "; ".join(correlaciones) if correlaciones else "monitoreo de rutina"
-        return {
-            "diagnostico": (
-                f"Análisis automático — {zona}: nivel {nivel}. "
-                f"Correlaciones: {corr}. "
-                "Verificación manual requerida por el jefe de turno."
-            ),
-            "acciones_llm": [
-                "Verificar lecturas de sensores in situ con equipo portátil",
-                "Notificar al jefe de turno y registrar en bitácora de mina",
-                "Consultar Decreto 1886/2015 Arts. 120–130 para protocolo aplicable",
+        gases   = (lecturas or {}).get("gases", {})
+        geo     = (lecturas or {}).get("geo", {})
+        hist    = historial_niveles or []
+
+        # ── Umbrales por gas ──────────────────────────────────────────────────
+        _UMBRALES = {
+            "CH4": [(0.5, "INFORMATIVO"), (1.5, "PRECAUCIÓN"), (2.5, "RIESGO ALTO"), (5.0, "EMERGENCIA")],
+            "CO":  [(10,  "INFORMATIVO"), (25,  "PRECAUCIÓN"), (50,  "RIESGO ALTO"), (200, "EMERGENCIA")],
+            "CO2": [(0.5, "INFORMATIVO"), (1.5, "PRECAUCIÓN"), (3.0, "RIESGO ALTO"), (5.0, "EMERGENCIA")],
+            "H2S": [(1.0, "INFORMATIVO"), (5.0, "PRECAUCIÓN"), (10,  "RIESGO ALTO"), (50,  "EMERGENCIA")],
+        }
+        _UNIDAD = {"CH4": "%", "CO": "ppm", "CO2": "%", "H2S": "ppm", "O2": "%"}
+        _REFS = {
+            "CH4": "Art. 120 D.1886/2015 — CH₄ máx 1 % (precaución), 1.5 % evacuación",
+            "CO":  "Art. 123 D.1886/2015 — CO máx 25 ppm (precaución), 200 ppm evacuación",
+            "CO2": "Art. 119 D.1886/2015 — CO₂ máx 0.5 % (precaución), 3 % evacuación",
+            "O2":  "Art. 118 D.1886/2015 — O₂ mín 19.5 %, <17.5 % evacuación",
+            "H2S": "Art. 69 OSHA/D.1886 — H₂S máx 1 ppm (precaución), 50 ppm evacuación",
+        }
+        _ACCIONES = {
+            "PRECAUCIÓN": [
+                "Notificar al jefe de turno y aumentar frecuencia de monitoreo",
+                "Verificar ventilación en la zona e incrementar caudal si es posible",
+                "Preparar auto-rescatadores y verificar su disponibilidad",
             ],
-            "referencia": "Decreto 1886/2015 — Arts. 120-130 (Ventilación y Gases)",
-            "pronostico": (
-                "Evolución indeterminada sin LLM activo. "
-                "Configure GEMINI_API_KEY en .env para diagnóstico inteligente."
-            ),
-            "texto_completo": "(Modo fallback — GEMINI_API_KEY no configurada)",
+            "RIESGO ALTO": [
+                "SUSPENDER ACTIVIDADES en la zona inmediatamente",
+                "Evacuar el frente y activar ventilación de emergencia",
+                "Reportar a la ANM: 57-1-3199099",
+            ],
+            "EMERGENCIA": [
+                "EVACUACIÓN PARCIAL — activar brigada de rescate",
+                "Cortar equipos no ATEX en la zona",
+                "Llamar 123 — ANM: 57-1-3199099",
+            ],
+            "EVACUACIÓN INMEDIATA": [
+                "🚨 EVACUACIÓN TOTAL INMEDIATA",
+                "Activar alarma general (3 pitidos cortos + 1 largo)",
+                "Llamar 123 — ANM: 57-1-3199099",
+            ],
+        }
+
+        # ── Clasificar cada gas ───────────────────────────────────────────────
+        gases_criticos:  list[str] = []
+        gases_atencion:  list[str] = []
+        refs_aplicables: list[str] = []
+
+        for gas, umbr_list in _UMBRALES.items():
+            val = gases.get(gas)
+            if val is None:
+                continue
+            nivel_gas = "SEGURO"
+            for umbral, nv in umbr_list:
+                if val >= umbral:
+                    nivel_gas = nv
+            unidad = _UNIDAD.get(gas, "")
+            if nivel_gas != "SEGURO":
+                gases_criticos.append(f"{gas} {val:.3f} {unidad} [{nivel_gas}]")
+                refs_aplicables.append(_REFS[gas])
+            else:
+                gases_atencion.append(f"{gas} {val:.3f} {unidad}")
+
+        # O₂ (umbral invertido)
+        o2 = gases.get("O2")
+        if o2 is not None:
+            if o2 < 16.0:
+                gases_criticos.append(f"O₂ {o2:.3f} % [EMERGENCIA — deficiencia crítica]")
+                refs_aplicables.append(_REFS["O2"])
+            elif o2 < 18.0:
+                gases_criticos.append(f"O₂ {o2:.3f} % [RIESGO ALTO — deficiencia]")
+                refs_aplicables.append(_REFS["O2"])
+            elif o2 < 19.5:
+                gases_criticos.append(f"O₂ {o2:.3f} % [PRECAUCIÓN — bajo mínimo recomendado]")
+                refs_aplicables.append(_REFS["O2"])
+            else:
+                gases_atencion.append(f"O₂ {o2:.3f} %")
+
+        # ── Construir diagnóstico ─────────────────────────────────────────────
+        partes: list[str] = []
+
+        if gases_criticos:
+            partes.append(f"Gases fuera de límite permisible: {'; '.join(gases_criticos)}.")
+        elif gases_atencion:
+            partes.append(
+                f"Lecturas dentro de límites pero con valores a vigilar: "
+                f"{'; '.join(gases_atencion)}."
+            )
+        else:
+            partes.append("No se recibieron lecturas de gases válidas del sensor.")
+
+        # Historial
+        if len(hist) >= 2:
+            hist_str = " → ".join(hist[-5:])
+            elevados = [n for n in hist[-6:] if n not in ("SEGURO", "INFORMATIVO")]
+            # Solo mostrar "Persistencia" si los gases ACTUALES también están elevados.
+            # Si los gases están en SEGURO ahora, el historial elevado fue por anomalía
+            # estadística previa — no hay un problema real en curso.
+            if len(elevados) >= 3 and gases_criticos:
+                partes.append(
+                    f"Historial reciente: {hist_str}. "
+                    f"Persistencia de nivel elevado en {len(elevados)} ciclos consecutivos."
+                )
+            else:
+                partes.append(f"Historial reciente: {hist_str}.")
+
+        # Correlaciones multiagente
+        if correlaciones:
+            partes.append(f"Correlaciones detectadas: {'; '.join(correlaciones)}.")
+
+        # Geomecánica
+        vibracion   = geo.get("vibracion_mms", 0)
+        deformacion = geo.get("deformacion_mm", 0)
+        if vibracion > 10 or deformacion > 3:
+            partes.append(
+                f"Parámetros geomecánicos elevados: "
+                f"vibración {vibracion:.1f} mm/s, deformación {deformacion:.1f} mm."
+            )
+
+        # Si no hay causa concreta, informar que es anomalía estadística
+        if not gases_criticos and not correlaciones:
+            partes.append(
+                "La alerta fue activada por detección de anomalía estadística "
+                "en el patrón de lecturas (sin gas individual sobre umbral)."
+            )
+
+        diagnostico = " ".join(partes)
+
+        # ── Pronóstico ────────────────────────────────────────────────────────
+        elevados_hist = [n for n in hist[-4:] if n not in ("SEGURO", "INFORMATIVO")]
+        if len(elevados_hist) >= 3:
+            pronostico = (
+                f"Tendencia persistente en nivel {nivel} durante "
+                f"{len(elevados_hist)} ciclos. Sin intervención, el riesgo puede escalar."
+            )
+        elif gases_criticos:
+            pronostico = (
+                "Riesgo activo por parámetros fuera de umbral. "
+                "Acción correctiva inmediata para evitar escalada."
+            )
+        else:
+            pronostico = (
+                "Nivel moderado sin gases críticos individuales. "
+                "Evaluar causa de la anomalía estadística y monitorear tendencia."
+            )
+
+        referencia = (
+            refs_aplicables[0]
+            if refs_aplicables
+            else "Decreto 1886/2015 — Arts. 118-130 (Calidad del Aire y Ventilación)"
+        )
+
+        acciones = _ACCIONES.get(nivel, [
+            "Verificar lecturas de sensores in situ con equipo portátil",
+            "Notificar al jefe de turno y registrar en bitácora de mina",
+            "Consultar Decreto 1886/2015 Arts. 118-130 para protocolo aplicable",
+        ])
+
+        return {
+            "diagnostico":    diagnostico,
+            "acciones_llm":   acciones,
+            "referencia":     referencia,
+            "pronostico":     pronostico,
+            "texto_completo": "(Análisis automático — Gemini no disponible)",
         }
 
 

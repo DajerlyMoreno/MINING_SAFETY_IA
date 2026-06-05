@@ -1,6 +1,6 @@
 """
 simulador.py — Simulador de sensores del entorno minero.
-Calibrado según Decreto 1886/2015 (Colombia) y condiciones típicas de
+Calibrado según rangos normativos internacionales y colombianos para
 minas de carbón subterráneas en Boyacá (cuencas Sogamoso-Mongua).
 
 Tres niveles de comportamiento:
@@ -9,8 +9,16 @@ Tres niveles de comportamiento:
      (voladuras, ventilación insuficiente, equipos diésel en marcha)
   3. INCIDENTE  (~5 %)  → PRECAUCIÓN a EVACUACIÓN — fallo real de seguridad
 
-Referencia técnica:
-  - Decreto 1886/2015 Arts. 64-69 (límites permisibles de gases)
+Rangos normativos aplicados (Decreto 1886/2015 — Arts. 39, 40, 44):
+  CH4   : 0–20 % LEL  (0–1 % vol.)   · alarma 20% LEL · crítico 100% LEL (5% vol.)
+  CO    : 0–20 ppm                    · alarma 25 ppm (TWA)
+  CO2   : 0.03–0.5 %                  · alarma 0.5 % · crítico 3 %
+  O2    : 19.5–23.5 %                 · alarma <19.5 % o >23.5 % · crítico <16 %
+  H2S   : 0–1 ppm                     · alarma 1 ppm (TWA) · crítico 5 ppm (STEL)
+  Temp. : 14–28 °C                    · alarma 28 °C · crítico 33 °C
+  Hum.  : 40–90 % RH                  · referencial
+
+Referencia técnica adicional:
   - Resolución 90708/2013 (Reglamento Técnico de Instalaciones Eléctricas)
   - NIOSH Handbook of Mining Hazards — seam gas liberation rates
   - Coals of the Boyacá Eastern Cordillera (SGC, 2018)
@@ -40,7 +48,8 @@ np.random.seed(42)
 # PERFILES NORMALES — línea base por zona
 # Representan condiciones operativas estables con ventilación funcionando.
 # Con estas distribuciones, ~98% de lecturas quedan en SEGURO
-# (umbrales Decreto 1886: CH4<0.5%, CO<10ppm, CO2<0.5%, O2>19.5%, H2S<1ppm)
+# CH4<1%vol [Art.39+40] | CO<25ppm [Art.39] | CO2<0.5% [Art.39]
+# O2:19.5-23.5% [Art.39] | H2S<1ppm [Art.39] | Temp<28°C [Art.44]
 #
 # Nota geológica: los Frentes tienen mayor liberación de CH4 que las galerías
 # por exposición directa al manto carbonífero. El CO aumenta con actividad diésel.
@@ -48,35 +57,43 @@ np.random.seed(42)
 PERFILES_ZONA = {
     # Frente A — zona más activa, manto con mayor índice de gasificación
     "Frente_A_Sogamoso": {
-        "CH4": (0.28, 0.07),   # ppm seepage del manto; ventilación en 0.5 m/s
-        "CO":  (5.8,  1.6),    # equipo diésel en operación (~4 máquinas)
-        "CO2": (0.11, 0.03),   # respiración + oxidación lenta del carbón
-        "O2":  (20.62, 0.10),  # ligeramente disminuido por consumo biológico/mecánico
-        "H2S": (0.18, 0.07),   # piritas en el manto; bajo pero presente
+        "CH4":         (0.28,  0.07),   # seepage del manto; ventilación en 0.5 m/s
+        "CO":          (5.8,   1.6),    # equipo diésel en operación (~4 máquinas)
+        "CO2":         (0.12,  0.03),   # rango normal 0.03-0.5 % [Art. 39]
+        "O2":          (20.62, 0.10),   # ligeramente disminuido por consumo biológico/mecánico
+        "H2S":         (0.18,  0.07),   # piritas en el manto; bajo pero presente
+        "temperatura": (26.5,  1.5),    # zona activa y profunda; rango 14-28 °C [Art. 44]
+        "humedad":     (78.0,  6.0),    # alta humedad por filtración; rango 40-90 % RH
     },
     # Frente B — activo pero manto menos gaseoso que Sogamoso
     "Frente_B_Mongua": {
-        "CH4": (0.20, 0.06),
-        "CO":  (4.5,  1.4),
-        "CO2": (0.09, 0.02),
-        "O2":  (20.68, 0.09),
-        "H2S": (0.12, 0.06),
+        "CH4":         (0.20,  0.06),
+        "CO":          (4.5,   1.4),
+        "CO2":         (0.10,  0.02),
+        "O2":          (20.68, 0.09),
+        "H2S":         (0.12,  0.06),
+        "temperatura": (24.5,  1.5),
+        "humedad":     (74.0,  6.0),
     },
     # Galería Central — vía de ventilación principal, gases diluidos en tránsito
     "Galeria_Central": {
-        "CH4": (0.10, 0.04),
-        "CO":  (3.2,  1.1),
-        "CO2": (0.07, 0.02),
-        "O2":  (20.75, 0.08),
-        "H2S": (0.08, 0.04),
+        "CH4":         (0.10,  0.04),
+        "CO":          (3.2,   1.1),
+        "CO2":         (0.08,  0.02),
+        "O2":          (20.75, 0.08),
+        "H2S":         (0.08,  0.04),
+        "temperatura": (22.0,  2.0),
+        "humedad":     (68.0,  8.0),
     },
-    # Bocamina — entrada/salida; prácticamente condiciones atmosféricas externas
+    # Bocamina — entrada/salida; condiciones cercanas a las externas
     "Bocamina": {
-        "CH4": (0.03, 0.02),
-        "CO":  (1.8,  0.7),
-        "CO2": (0.05, 0.01),
-        "O2":  (20.85, 0.06),
-        "H2S": (0.04, 0.02),
+        "CH4":         (0.03,  0.02),
+        "CO":          (1.8,   0.7),
+        "CO2":         (0.05,  0.01),
+        "O2":          (20.85, 0.06),
+        "H2S":         (0.04,  0.02),
+        "temperatura": (18.5,  2.5),
+        "humedad":     (60.0,  10.0),
     },
 }
 
@@ -123,7 +140,7 @@ INCIDENTES = [
     {
         "tipo": "inicio_incendio",
         "descripcion": "Inicio de incendio — carbón espontáneo o cortocircuito",
-        "gases":  {"CO": (55, 180), "CO2": (0.8, 2.2)},
+        "gases":  {"CO": (55, 180), "CO2": (0.8, 2.2), "temperatura": (31, 42)},
         "nivel_esperado": "EMERGENCIA",
     },
     {
@@ -171,14 +188,19 @@ PERFILES_GEO = {
 }
 
 DETECCIONES_VISUALES = [
-    ("normal",                   0.80),
-    ("polvo_excesivo",           0.06),
-    ("persona_sin_casco",        0.04),
-    ("persona_sin_chaleco",      0.03),
-    ("humo",                     0.03),
+    ("normal",                   0.87),
+    ("persona_sin_casco",        0.05),
+    ("persona_sin_chaleco",      0.04),
     ("equipo_dañado",            0.02),
     ("persona_zona_restringida", 0.02),
 ]
+
+# Detecciones específicas por tipo de incidente
+_DETECCION_POR_INCIDENTE: dict[str, str] = {
+    "inicio_incendio":       "humo",
+    "explosion_polvo_carbon": "polvo_excesivo",
+    "escape_ch4_masivo":     "polvo_excesivo",
+}
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -259,7 +281,11 @@ class Simulador:
             # Ruido mínimo de sensor
             nuevo   += float(np.random.normal(0.0, sigma * 0.04))
             if gas == "O2":
-                nuevo = float(np.clip(nuevo, 15.0, 21.0))
+                nuevo = float(np.clip(nuevo, 15.0, 23.5))
+            elif gas == "temperatura":
+                nuevo = float(np.clip(nuevo, 5.0, 55.0))
+            elif gas == "humedad":
+                nuevo = float(np.clip(nuevo, 10.0, 100.0))
             else:
                 nuevo = float(np.clip(nuevo, 0.0, None))
             gases[gas] = round(nuevo, 4)
@@ -310,7 +336,7 @@ class Simulador:
         nuevo_O2  = gases["O2"]  + delta_O2_combustion + delta_O2_desplaz
         nuevo_CO2 = gases["CO2"] + delta_CO2_combustion
 
-        gases["O2"]  = round(float(np.clip(nuevo_O2,  15.0, 21.0)), 4)
+        gases["O2"]  = round(float(np.clip(nuevo_O2,  15.0, 23.5)), 4)
         gases["CO2"] = round(float(np.clip(nuevo_CO2,  0.0,  5.0)), 4)
 
         return gases
@@ -325,9 +351,11 @@ class Simulador:
                 resultado[var] = float(np.clip(np.random.normal(mu, sigma), 0, None))
         return resultado
 
-    def _deteccion_visual(self) -> dict:
-        dets, probs = zip(*DETECCIONES_VISUALES)
-        deteccion = np.random.choice(dets, p=list(probs))
+    def _deteccion_visual(self, tipo_evento: str = "normal") -> dict:
+        deteccion = _DETECCION_POR_INCIDENTE.get(tipo_evento)
+        if deteccion is None:
+            dets, probs = zip(*DETECCIONES_VISUALES)
+            deteccion = np.random.choice(dets, p=list(probs))
         return {
             "deteccion":  deteccion,
             "confianza":  round(float(np.random.uniform(0.75, 0.99)), 3),
@@ -403,7 +431,6 @@ class Simulador:
         """Genera datos con AR(1)+correlaciones y los envía al Orquestador."""
         self._init_estado(zona)
         geo         = self._lectura_geo_normal(zona)
-        imagen      = self._deteccion_visual()
         tipo_evento = "normal"
 
         r = random.random()
@@ -415,6 +442,9 @@ class Simulador:
             # Sin evento: limpiar cualquier target residual de incidente anterior
             if zona in self._target_gases and zona not in self._perturbacion_activa:
                 self._clear_target(zona)
+
+        # Imagen coherente con el tipo de evento (humo solo en incendio real)
+        imagen = self._deteccion_visual(tipo_evento)
 
         # Generar lectura con AR(1) y correlaciones (SIEMPRE gradual)
         gases = self._lectura_gas_normal(zona)
@@ -472,6 +502,18 @@ class Simulador:
     def detener(self) -> None:
         self._corriendo = False
 
+    def reset(self) -> None:
+        """Borra todo el estado en memoria: lecturas previas, targets e incidentes activos.
+        El próximo ciclo arrancará desde los valores de línea base de cada zona."""
+        estaba_corriendo = self._corriendo
+        self._corriendo           = False
+        self._ciclo               = 0
+        self._estado_actual       = {}
+        self._target_gases        = {}
+        self._perturbacion_activa = {}
+        self._corriendo           = estaba_corriendo
+        log.info("[SIM] Estado reiniciado — proximas lecturas desde linea base")
+
 
 # ── FastAPI del simulador (Puerto 8005) ───────────────────────────────────────
 from fastapi import FastAPI
@@ -508,28 +550,29 @@ simulador = Simulador()
     "/sensores/gases/{zona}",
     summary="Sensor de gases — valor crudo",
     description=(
-        "Retorna las 5 lecturas de gas del sensor instalado en la zona. "
-        "Equivale a lo que mediría un analizador multigas Dräger X-am 5100 real. "
+        "Retorna 7 lecturas del sensor instalado en la zona (5 gases + temperatura + humedad). "
+        "Equivale a lo que mediría un analizador multigas Dräger X-am 5100 + termohigrómetro. "
         "El Agente de Gases consume este endpoint para recolectar los datos, "
-        "aplicar umbrales Decreto 1886/2015, LSTM y detección de anomalías."
+        "aplicar umbrales normativos Arts. 39/40/44, LSTM y detección de anomalías."
     ),
 )
 async def sensor_gases(zona: str):
-    """Valores crudos del sensor de gases — sin procesamiento."""
+    """Valores crudos del sensor de gases + ambiental — sin procesamiento."""
     simulador._init_estado(zona)
     # Aplicar perturbaciones/incidentes activos (solo actualiza targets)
     simulador._aplicar_perturbacion(zona)
     gases = simulador._lectura_gas_normal(zona)
     return {
-        "zona":      zona,
-        "timestamp": datetime.utcnow().isoformat(),
-        "sensor":    "analizador_multigas",
-        # Solo los 5 valores medidos — nada más
-        "CH4": gases["CH4"],
-        "CO":  gases["CO"],
-        "CO2": gases["CO2"],
-        "O2":  gases["O2"],
-        "H2S": gases["H2S"],
+        "zona":        zona,
+        "timestamp":   datetime.utcnow().isoformat(),
+        "sensor":      "analizador_multigas_termohigrometro",
+        "CH4":         gases["CH4"],
+        "CO":          gases["CO"],
+        "CO2":         gases["CO2"],
+        "O2":          gases["O2"],
+        "H2S":         gases["H2S"],
+        "temperatura": gases["temperatura"],
+        "humedad":     gases["humedad"],
     }
 
 
@@ -677,6 +720,42 @@ async def iniciar_simulacion(max_ciclos: int = -1):
 async def detener_simulacion():
     simulador.detener()
     return {"estado": "simulacion_detenida"}
+
+
+@sim_app.post("/reset")
+async def reset_simulador():
+    """Restablece las condiciones de la mina a linea base:
+    - Reinicia estado en memoria del simulador (gases, targets, incidentes)
+    - Borra historial SQLite de lecturas (agente de gases)
+    - Borra checkpoints LangGraph (orquestador)
+    """
+    import httpx as _httpx
+    simulador.reset()
+
+    resultados = {}
+
+    async with _httpx.AsyncClient(timeout=5.0) as c:
+        # Agente de gases: borra lecturas SQLite + historial en memoria
+        try:
+            r = await c.post("http://127.0.0.1:8001/reset")
+            if r.is_success:
+                resultados["agente_gases"] = r.json()
+        except Exception as e:
+            resultados["agente_gases"] = {"error": str(e)}
+
+        # Orquestador: borra checkpoints LangGraph + historial de eventos
+        try:
+            r = await c.post("http://127.0.0.1:8000/reset")
+            if r.is_success:
+                resultados["orquestador"] = r.json()
+        except Exception as e:
+            resultados["orquestador"] = {"error": str(e)}
+
+    return {
+        "estado":   "reiniciado",
+        "mensaje":  "Condiciones restablecidas a linea base. Reinicia la simulacion para comenzar.",
+        "detalles": resultados,
+    }
 
 
 @sim_app.get("/estado")

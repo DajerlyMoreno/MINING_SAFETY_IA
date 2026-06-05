@@ -2,10 +2,10 @@
  * RiskMap.jsx — Mapa visual de riesgo por zona de la mina.
  *
  * Comportamiento de seguridad en tiempo real (doble fuente):
- *  • Gas Agent polling cada 5 s  → clasificación local inmediata (piso de seguridad)
- *  • Orquestador WebSocket       → nivel oficial; prevalece si es >= al local
+ *  - Gas Agent polling cada 5 s  -> clasificacion local inmediata (piso de seguridad)
+ *  - Orquestador WebSocket       -> nivel oficial; prevalece si es >= al local
  *
- * Regla: se muestra el nivel MÁS ALTO entre ambas fuentes.
+ * Regla: se muestra el nivel MAS ALTO entre ambas fuentes.
  * Esto garantiza que un pico de gas aparezca en el mapa de inmediato,
  * sin esperar el ciclo completo del orquestador.
  */
@@ -158,7 +158,7 @@ export function RiskMap({ eventos = [] }) {
   return (
     <div className="bg-gray-900 rounded-xl p-4 border border-gray-700 relative">
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-white font-bold text-lg">🗺️ Mapa de Riesgo — Mina</h2>
+        <h2 className="text-white font-bold text-lg">Mapa de Riesgo — Mina</h2>
         <span className="text-xs text-gray-500">Sensor ~5 s · Orquestador en vivo</span>
       </div>
 
@@ -245,7 +245,7 @@ export function RiskMap({ eventos = [] }) {
               left:     tooltipPos.x + 18,
               top:      Math.max(8, tooltipPos.y - 80),
               minWidth: 260,
-              maxWidth: 320,
+              maxWidth: 380,
             }}
           >
             {/* Cabecera con color del nivel */}
@@ -259,7 +259,7 @@ export function RiskMap({ eventos = [] }) {
               </p>
               {fuente && (
                 <p className="text-[10px] text-gray-400 mt-0.5">
-                  {fuente === "orquestador" ? "🧠 vía orquestador" : "📡 sensor directo"}
+                  {fuente === "orquestador" ? "via orquestador" : "sensor directo"}
                 </p>
               )}
             </div>
@@ -270,7 +270,7 @@ export function RiskMap({ eventos = [] }) {
               {(correls.length > 0 || gasesAlerta.length > 0) && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
-                    ⚡ Por qué cambió
+                    Por que cambio
                   </p>
                   {correls.map((c, i) => (
                     <div key={i} className="flex items-start gap-1 mb-0.5">
@@ -294,7 +294,7 @@ export function RiskMap({ eventos = [] }) {
               {Object.keys(gases).length > 0 && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
-                    🧪 Lecturas
+                    Lecturas
                   </p>
                   <table className="text-xs w-full">
                     <tbody>
@@ -329,10 +329,10 @@ export function RiskMap({ eventos = [] }) {
               {diagLLM && (
                 <div className="border-t border-gray-700 pt-2">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1">
-                    🧠 Diagnóstico LLM
+                    Diagnostico LLM
                   </p>
-                  <p className="text-[11px] text-gray-300 leading-snug">
-                    {diagLLM.length > 150 ? diagLLM.slice(0, 150) + "…" : diagLLM}
+                  <p className="text-[11px] text-gray-300 leading-snug max-h-28 overflow-y-auto pr-1">
+                    {diagLLM}
                   </p>
                 </div>
               )}

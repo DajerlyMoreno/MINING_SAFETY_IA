@@ -1,6 +1,15 @@
 """
-umbrales.py — Umbrales normativos de gases (Decreto 1886/2015 + OSHA/NIOSH).
+umbrales.py — Umbrales normativos de gases.
 Fuente de verdad única para clasificación de niveles de riesgo.
+
+Rangos normativos aplicados (Decreto 1886/2015 — Arts. 39, 40, 44):
+  CH4   : 0–20 % LEL (0–1 % vol.)   · alarma 20% LEL · crítico 100% LEL (5% vol.)
+  CO    : 0–20 ppm                   · alarma 25 ppm (TWA)
+  CO2   : 0.03–0.5 %                 · alarma 0.5 % · crítico 3 %
+  O2    : 19.5–23.5 %                · alarma <19.5 % o >23.5 % · crítico <16 %
+  H2S   : 0–1 ppm                    · alarma 1 ppm (TWA) · crítico 5 ppm (STEL)
+  Temp. : 14–28 °C                   · alarma 28 °C · crítico 33 °C  [Art. 44]
+  Hum.  : 40–90 % RH                 · referencial
 """
 
 from dataclasses import dataclass
@@ -25,24 +34,24 @@ class UmbralGas:
 UMBRALES_GAS: dict[str, UmbralGas] = {
     "CH4": UmbralGas(
         "Metano", "% v/v",
-        (0.0, 0.9), (1.0, 1.49), (1.5, 4.99), (5.0, float("inf")),
-        "Gas inflamable/explosivo (LEL 5%, UEL 15%). Principal causa de explosiones.",
-        "Art. 118-121 Decreto 1886/2015 — MSHA LEL >1%",
-        0.4, 0.15,
+        (0.0, 0.99), (1.0, 1.49), (1.5, 4.99), (5.0, float("inf")),
+        "Gas inflamable/explosivo. Alarma 20% LEL (1% vol.), crítico 100% LEL (5% vol.).",
+        "Art. 39 + 40 Decreto 1886/2015",
+        0.15, 0.06,
     ),
     "CO": UmbralGas(
         "Monóxido de Carbono", "ppm",
         (0, 24.9), (25, 49.9), (50, 199.9), (200, float("inf")),
-        "Gas tóxico inodoro. TLV-TWA ACGIH: 25 ppm. IDLH NIOSH: 1200 ppm.",
-        "Art. 123 Decreto 1886/2015 — OSHA PEL 50 ppm",
-        12.0, 4.0,
+        "Gas tóxico inodoro. Alarma 25 ppm (TWA). IDLH NIOSH: 1200 ppm.",
+        "Art. 39 Decreto 1886/2015",
+        5.0, 2.0,
     ),
     "CO2": UmbralGas(
         "Dióxido de Carbono", "% v/v",
-        (0, 0.49), (0.5, 1.49), (1.5, 2.99), (3.0, float("inf")),
-        "Asfixiante. >3% dificultad respiratoria severa. >5% pérdida de consciencia.",
-        "Art. 119 Decreto 1886/2015 — OSHA PEL 5000 ppm",
-        0.15, 0.06,
+        (0, 0.49), (0.5, 2.99), (3.0, 4.99), (5.0, float("inf")),
+        "Asfixiante. Alarma 0.5% (5000 ppm TWA). Crítico 3%. >5% pérdida de consciencia.",
+        "Art. 39 Decreto 1886/2015",
+        0.08, 0.03,
     ),
     "O2": UmbralGas(
         "Oxígeno", "% v/v",
@@ -53,10 +62,17 @@ UMBRALES_GAS: dict[str, UmbralGas] = {
     ),
     "H2S": UmbralGas(
         "Sulfuro de Hidrógeno", "ppm",
-        (0, 0.9), (1.0, 9.9), (10, 49.9), (50, float("inf")),
-        "Extremadamente tóxico. NIOSH IDLH: 50 ppm. Parálisis olfativa a 100 ppm.",
-        "OSHA PEL 20 ppm (techo) — MSHA 10 ppm TWA",
-        0.3, 0.12,
+        (0, 0.9), (1.0, 4.9), (5.0, 49.9), (50, float("inf")),
+        "Extremadamente tóxico. Alarma 1 ppm (TWA). Crítico 5 ppm (STEL). IDLH: 50 ppm.",
+        "Art. 39 Decreto 1886/2015",
+        0.15, 0.07,
+    ),
+    "temperatura": UmbralGas(
+        "Temperatura Ambiente", "°C",
+        (14, 27.9), (28, 32.9), (33, 39.9), (40, float("inf")),
+        "Estrés térmico severo. Alarma 28 °C. Crítico 33 °C.",
+        "Art. 44 Decreto 1886/2015",
+        22.0, 3.5,
     ),
 }
 

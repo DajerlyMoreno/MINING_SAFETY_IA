@@ -137,6 +137,21 @@ def _guardar_evento_sync(evento: dict) -> None:
         conn.close()
 
 
+def _limpiar_historial_sync(zona: str | None = None) -> int:
+    """Elimina lecturas de gases. Si zona=None borra todo; si no, solo esa zona.
+    Devuelve el número de filas eliminadas."""
+    conn = _get_conn()
+    try:
+        if zona:
+            cur = conn.execute("DELETE FROM lecturas_gases WHERE zona = ?", (zona,))
+        else:
+            cur = conn.execute("DELETE FROM lecturas_gases")
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()
+
+
 def _contar_lecturas_sync(zona: str) -> int:
     conn = _get_conn()
     try:
@@ -179,6 +194,16 @@ async def guardar_evento(evento: dict) -> None:
         await loop.run_in_executor(None, partial(_guardar_evento_sync, evento))
     except Exception as e:
         log.warning(f"Error guardando evento en DB: {e}")
+
+
+async def limpiar_historial(zona: str | None = None) -> int:
+    """Elimina lecturas de gases de SQLite. zona=None limpia todo."""
+    loop = asyncio.get_event_loop()
+    try:
+        return await loop.run_in_executor(None, partial(_limpiar_historial_sync, zona))
+    except Exception as e:
+        log.warning(f"Error limpiando historial en DB: {e}")
+        return 0
 
 
 async def contar_lecturas(zona: str) -> int:

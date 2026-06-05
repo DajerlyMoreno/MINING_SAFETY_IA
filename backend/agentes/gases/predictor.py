@@ -34,11 +34,11 @@ log = get_logger("predictor_lstm")
 FEATURES = ["CH4", "CO", "CO2", "O2", "H2S"]
 
 GAS_STATS_DEFAULT = {
-    "CH4": (0.28, 0.10),
-    "CO":  (5.8,  2.5),
-    "CO2": (0.11, 0.05),
-    "O2":  (20.6, 0.15),
-    "H2S": (0.18, 0.08),
+    "CH4": (0.15, 0.07),
+    "CO":  (3.8,  2.0),
+    "CO2": (0.09, 0.03),
+    "O2":  (20.73, 0.12),
+    "H2S": (0.18, 0.07),   # ajustado al perfil real del simulador (media 0.18, std 0.07)
 }
 
 
@@ -185,6 +185,38 @@ class PredictorLSTMGases:
             self._cargado = True
             log.info("Predictor listo: {}/{} zonas".format(cargados, len(settings.zonas)))
 
+    def _imputar_ventana(self, X_raw: np.ndarray) -> np.ndarray:
+        """Imputa ceros (lecturas faltantes) por interpolación lineal.
+        Gaps de hasta 2 pasos consecutivos → interpolación lineal.
+        Gaps > 2 pasos → media de la zona (GAS_STATS_DEFAULT)."""
+        X = X_raw.copy()
+        T, n_feats = X.shape
+        for col in range(n_feats):
+            mean_fb = GAS_STATS_DEFAULT[FEATURES[col]][0]
+            i = 0
+            while i < T:
+                if X[i, col] == 0.0:
+                    gap_start = i
+                    while i < T and X[i, col] == 0.0:
+                        i += 1
+                    gap_end = i
+                    gap_len = gap_end - gap_start
+                    v_left  = X[gap_start - 1, col] if gap_start > 0 else None
+                    v_right = X[gap_end,   col] if gap_end < T else None
+                    for j in range(gap_start, gap_end):
+                        if gap_len <= 2 and v_left is not None and v_right is not None:
+                            frac      = (j - gap_start + 1) / (gap_len + 1)
+                            X[j, col] = v_left + frac * (v_right - v_left)
+                        elif v_left is not None:
+                            X[j, col] = v_left
+                        elif v_right is not None:
+                            X[j, col] = v_right
+                        else:
+                            X[j, col] = mean_fb
+                else:
+                    i += 1
+        return X
+
     def _cargar_scalers(self) -> None:
         ruta = Path(settings.model_paths.lstm_scalers_gases)
         if not ruta.exists():
@@ -208,6 +240,7 @@ class PredictorLSTMGases:
         hist     = historial[-ventana:]
         X_raw    = np.array([[h.get(g, 0.0) for g in FEATURES] for h in hist],
                             dtype=np.float32)
+        X_raw    = self._imputar_ventana(X_raw)
         scaler   = self._scalers.get(zona)
         if scaler is not None:
             try:
@@ -265,12 +298,41 @@ class PredictorLSTMGases:
                 0, None
             )
 
+            # Suavizado EMA: reduce oscilaciones entre pasos consecutivos
+            if pred_real.shape[0] > 1:
+                alpha_smooth = 0.45
+                for t in range(1, pred_real.shape[0]):
+                    pred_real[t] = (alpha_smooth * pred_real[t]
+                                    + (1.0 - alpha_smooth) * pred_real[t - 1])
+
+            # Anclar predicciones a la lectura actual: impide saltos fisicamente irreales.
+            # Cap = max(4x valor actual, 5x media historica del gas).
+            if historial:
+                ultima = historial[-1]
+                for i, gas in enumerate(FEATURES):
+                    v_ahora = float(ultima.get(gas, GAS_STATS_DEFAULT[gas][0]))
+                    v_media = GAS_STATS_DEFAULT[gas][0]
+                    cap = max(v_ahora * 4.0, v_media * 5.0)
+                    pred_real[:, i] = np.clip(pred_real[:, i], 0.0, cap)
+
             from backend.agentes.gases.umbrales import clasificar_gas
+
+            # Margen de seguridad para alertas predictivas: evita falsos positivos
+            # cerca del umbral. Se aplica solo a la clasificacion de PREDICCIONES,
+            # no a lecturas reales. H2S requiere 20% sobre umbral; otros gases 15%.
+            _MARGEN_PRED = {"CH4": 1.15, "CO": 1.10, "CO2": 1.15, "H2S": 1.20}
+            _MARGEN_O2   = 0.5   # O2 debe estar 0.5 % por debajo del umbral
+
             alertas = []
             for t, paso in enumerate(pred_real):
                 for i, gas in enumerate(FEATURES):
                     valor = float(paso[i])
-                    nivel = clasificar_gas(gas, valor)
+                    # Valor ajustado para clasificacion con margen
+                    if gas == "O2":
+                        valor_eval = valor + _MARGEN_O2
+                    else:
+                        valor_eval = valor / _MARGEN_PRED.get(gas, 1.15)
+                    nivel = clasificar_gas(gas, valor_eval)
                     if NIVEL_ORDEN[nivel] >= NIVEL_ORDEN[NivelRiesgo.PRECAUCION]:
                         alertas.append({
                             "gas":            gas,

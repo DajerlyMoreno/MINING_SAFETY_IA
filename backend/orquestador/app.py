@@ -164,18 +164,10 @@ async def orquestar(req: OrquestarRequest):
     if req.zona not in settings.zonas:
         raise HTTPException(400, f"Zona no soportada: {req.zona}")
 
-    # Consultar agentes en paralelo
-    resp_gases, resp_imagen, resp_geo = await asyncio.gather(
-        comm.analizar_gases(req.zona, req.gases),
-        comm.analizar_imagen(
-            req.zona,
-            req.imagen.get("deteccion", "normal"),
-            req.imagen.get("confianza", 0.9),
-            req.imagen.get("n_personas", 0),
-        ),
-        comm.analizar_geo(req.zona, req.geo),
-        return_exceptions=False,
-    )
+    # Solo agente de gases activo; imagen y geo desactivados
+    resp_gases  = await comm.analizar_gases(req.zona, req.gases)
+    resp_imagen = None
+    resp_geo    = None
 
     # Monitor: estado actual de agentes
     resp_monitor = {
@@ -454,6 +446,54 @@ async def historial_langgraph(zona: str):
         }
     except Exception as e:
         return {"zona": zona, "error": str(e), "historial_niveles": []}
+
+
+@app.post("/reset")
+async def reset_orquestador():
+    """Reinicia el historial del orquestador y la memoria de LangGraph.
+    - Borra checkpoints SQLite (AsyncSqliteSaver) o reconstruye con MemorySaver.
+    - Limpia el historial de eventos en memoria del motor.
+    """
+    global _aio_conn
+
+    # 1. Limpiar historial de eventos del motor
+    motor.historial.clear()
+
+    # 2. Limpiar memoria LangGraph
+    if _aio_conn:
+        # AsyncSqliteSaver: borrar filas de las tablas de checkpoints
+        tablas = ["checkpoint_blobs", "checkpoint_writes", "checkpoints", "writes"]
+        borradas = 0
+        for tabla in tablas:
+            try:
+                cur = await _aio_conn.execute(f"DELETE FROM {tabla}")
+                borradas += cur.rowcount
+            except Exception:
+                pass   # tabla puede no existir segun version de LangGraph
+        await _aio_conn.commit()
+
+        # Reconstruir el grafo con la misma conexion (DB ya limpia)
+        try:
+            from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+            checkpointer = AsyncSqliteSaver(_aio_conn)
+            _grafo_mod.grafo_mineria = _grafo_mod.construir_grafo(checkpointer)
+        except Exception as e:
+            log.warning(f"No se pudo reconstruir grafo tras reset: {e}")
+
+        log.info(f"LangGraph reset: {borradas} filas eliminadas de checkpoints SQLite")
+        return {
+            "estado":   "reiniciado",
+            "motor":    "AsyncSqliteSaver",
+            "filas_borradas": borradas,
+        }
+    else:
+        # MemorySaver: reconstruir el grafo con saver nuevo (descarta estado en RAM)
+        _grafo_mod.grafo_mineria = _grafo_mod.construir_grafo()
+        log.info("LangGraph reset: grafo reconstruido con MemorySaver fresco")
+        return {
+            "estado": "reiniciado",
+            "motor":  "MemorySaver",
+        }
 
 
 @app.get("/zonas")

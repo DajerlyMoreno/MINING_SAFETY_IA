@@ -62,7 +62,7 @@ Sistema de inteligencia artificial para monitoreo en tiempo real de condiciones 
 
 - **Windows 10/11** (el sistema fue desarrollado y probado en Windows)
 - **Python 3.11** (versiones 3.12+ pueden tener conflictos con TF 2.15)
-- **Node.js 18+** con npm
+- **Node.js 18+** con pnpm
 - **Git** (opcional, para clonar el repositorio)
 
 > **Importante:** No usar Python 3.12+ ni versiones de TensorFlow distintas a 2.15.0. Ver sección de dependencias críticas.
