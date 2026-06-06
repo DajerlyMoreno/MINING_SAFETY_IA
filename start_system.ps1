@@ -126,8 +126,8 @@ Write-Ok "Bot WhatsApp iniciado (8006)"
 Start-Sleep -Seconds 2
 
 # Capa 3 — Orquestador central (LangGraph + LLM)
-$procs += Start-Servicio "ORQUESTADOR"        8000 "backend.orquestador.app:app" "info"
-Write-Ok "Orquestador + LangGraph iniciado (8000)"
+$procs += Start-Servicio "ORQUESTADOR"        8007 "backend.orquestador.app:app" "info"
+Write-Ok "Orquestador + LangGraph iniciado (8007)"
 Start-Sleep -Seconds 5
 
 # Simulador
@@ -164,7 +164,7 @@ if (-not $SinFrontend -and -not $SoloBackend) {
 Write-Header "Sistema iniciado — UPTC 2026"
 Write-Host ""
 Write-Host "  CAPA 2+3 — Orquestador + LangGraph:" -ForegroundColor Cyan
-Write-Host "    http://localhost:8000/docs" -ForegroundColor White
+Write-Host "    http://localhost:8007/docs" -ForegroundColor White
 Write-Host "  CAPA 3 — Agentes especializados:" -ForegroundColor Cyan
 Write-Host "    Gases:       http://localhost:8001/docs" -ForegroundColor White
 Write-Host "    Imágenes:    http://localhost:8002/docs" -ForegroundColor White

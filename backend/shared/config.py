@@ -88,7 +88,7 @@ class SystemConfig:
 
     # Orquestador
     orquestador_host: str = "127.0.0.1"
-    orquestador_port: int = 8000
+    orquestador_port: int = 8007
 
     # RAG
     embedding_model:  str = "all-MiniLM-L6-v2"

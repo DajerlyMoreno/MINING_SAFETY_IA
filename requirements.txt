@@ -1,4 +1,15 @@
-# ── Web / API ─────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# requirements.txt — Runtime del sistema (PRODUCCIÓN)
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# NO incluye TensorFlow. El predictor LSTM usa inferencia NumPy pura.
+# h5py es suficiente para leer los pesos de los modelos .keras.
+#
+# Instalación: pip install -r requirements.txt
+# Python: 3.11+ (testeado en 3.11 y 3.12)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Web / API ─────────────────────────────────────────────────────────────────────
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
 httpx==0.27.0
@@ -6,38 +17,30 @@ python-dotenv==1.0.1
 pydantic==2.7.4
 websockets>=12.0
 
-# ── IA / ML ───────────────────────────────────────────────────────────────────
-# El predictor usa inferencia NumPy pura (sin keras en runtime).
-# tensorflow y tf-keras solo se necesitan si se reentrenan modelos.
-# h5py es requerido para leer los pesos de los modelos .keras.
-tensorflow==2.15.0
-tf-keras==2.15.0
+# ── ML Core (inferencia NumPy pura — NO tensorflow en runtime) ────────────────
+# h5py: lectura de pesos .keras (model.weights.h5 dentro del ZIP)
 h5py==3.11.0
-
-# Dependencias que TF 2.15 requiere en versiones específicas:
-protobuf==4.25.3
-ml-dtypes==0.2.0
 numpy==1.26.4
+protobuf==4.25.3
+ml-dtypes==0.5.0
 
+# ── RAG (búsqueda vectorial + embeddings) ────────────────────────────────────
 langchain>=0.3.0
 langchain-community>=0.3.0
 langchain-core>=0.3.0
 langchain-text-splitters>=0.3.0
-datasets>=2.14.0
 faiss-cpu==1.8.0
 sentence-transformers==3.0.1
 scikit-learn==1.5.1
 pandas==2.2.2
 
-# ── Capa 2: LLM (Google Gemini) ───────────────────────────────────────────────
-# SDK nuevo google-genai (google.generativeai está deprecado).
-# Configura GEMINI_API_KEY en .env. Clave gratuita: https://aistudio.google.com/
-google-genai>=1.0.0
+# ── LLM (Google Gemini) ────────────────────────────────────────────────────────
+# Versión fija para evitar backtracking de dependencias.
+# Requiere GEMINI_API_KEY en .env (https://aistudio.google.com/)
+google-genai==1.7.0
 
-# ── Capa 3: LangGraph (flujo cíclico con memoria) ─────────────────────────────
-# Compatible con langchain-core>=0.3.0
+# ── Orquestación (LangGraph + memoria persistente) ───────────────────────────
 langgraph>=0.2.0
-# Persistencia SQLite para LangGraph (reemplaza MemorySaver con disco)
 langgraph-checkpoint-sqlite>=1.0.0
 
 # ── Datos / Visualización ─────────────────────────────────────────────────────

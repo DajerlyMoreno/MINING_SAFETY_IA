@@ -134,7 +134,7 @@ start "Bot WhatsApp :8006" /d "%ROOT%" cmd /k "call env\Scripts\activate.bat && 
 timeout /t 3 /nobreak >nul
 echo     OK Bot WhatsApp       :8006
 
-start "Orquestador :8000" /d "%ROOT%" cmd /k "call env\Scripts\activate.bat && uvicorn backend.orquestador.app:app --host 127.0.0.1 --port 8000 --log-level info"
+start "Orquestador :8007" /d "%ROOT%" cmd /k "call env\Scripts\activate.bat && uvicorn backend.orquestador.app:app --host 127.0.0.1 --port 8007 --log-level info"
 timeout /t 6 /nobreak >nul
 echo     OK Orquestador        :8000
 
@@ -181,7 +181,7 @@ echo   SISTEMA INICIADO
 echo ==========================================================
 echo.
 echo   Swagger UI:
-echo     Orquestador : http://localhost:8000/docs
+echo     Orquestador : http://localhost:8007/docs
 echo     Gases       : http://localhost:8001/docs
 echo     Imagenes    : http://localhost:8002/docs
 echo     Geomecanico : http://localhost:8003/docs

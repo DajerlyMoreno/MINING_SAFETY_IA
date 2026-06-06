@@ -15,7 +15,7 @@ Sistema de inteligencia artificial para monitoreo en tiempo real de condiciones 
 └───────────────────┬──────────────────────────┘
                     │ HTTP + WebSocket
 ┌───────────────────▼──────────────────────────┐
-│   Orquestador  (puerto 8000)                 │
+│   Orquestador  (puerto 8007)                 │
 │   • Fusion de respuestas multiagente         │
 │   • Reglas de correlacion entre senales      │
 │   • Consulta RAG al corpus normativo         │
@@ -48,7 +48,7 @@ Sistema de inteligencia artificial para monitoreo en tiempo real de condiciones 
 
 | Componente | Puerto | Estado | Descripcion |
 |---|---|---|---|
-| Orquestador | 8000 | OK | Motor central de fusion multiagente |
+| Orquestador | 8007 | OK | Motor central de fusion multiagente |
 | Agente de Gases | 8001 | OK | Analisis CH4, CO, CO2, O2, H2S |
 | Agente de Imagenes | 8002 | Pendiente | Deteccion visual por camara |
 | Agente Geomecanico | 8003 | Pendiente | Estabilidad estructural |
@@ -202,7 +202,7 @@ start_system.bat
 ```
 
 Esto abre ventanas separadas para cada componente:
-- Orquestador (puerto 8000)
+- Orquestador (puerto 8007)
 - Agente de Gases (puerto 8001)
 - Agente Imagenes (puerto 8002)
 - Agente Geomecanico (puerto 8003)
@@ -256,7 +256,7 @@ proyecto_mineria_ia/
 │   │   ├── imagenes/       # Pendiente
 │   │   └── geomecanico/    # Pendiente
 │   ├── orquestador/
-│   │   └── app.py          # Orquestador central (puerto 8000)
+│   │   └── app.py          # Orquestador central (puerto 8007)
 │   ├── simulacion/
 │   │   └── simulador.py    # Simulador experto (puerto 8005)
 │   ├── rag/
@@ -346,7 +346,7 @@ proyecto_mineria_ia/
 
 ## API — Endpoints principales
 
-### Orquestador `localhost:8000`
+### Orquestador `localhost:8007`
 
 | Metodo | Ruta | Descripcion |
 |---|---|---|

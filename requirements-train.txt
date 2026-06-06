@@ -1,0 +1,30 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# requirements-train.txt — Reentrenamiento de modelos LSTM
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# SOLO para reentrenar modelos en Google Colab o máquina local.
+# NO instalar en producción — usa requirements.txt (inferencia NumPy).
+#
+# Python: 3.11 EXCLUSIVAMENTE (TF 2.15 no disponible en 3.12+)
+# Instalación: pip install -r requirements-train.txt
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── TensorFlow (versión CRÍTICA — no cambiar) ───────────────────────────────
+tensorflow==2.15.0
+tf-keras==2.15.0
+
+# ── Dependencias exactas que TF 2.15 requiere ────────────────────────────────
+numpy==1.26.4
+protobuf==4.25.3
+ml-dtypes==0.2.0
+h5py==3.11.0
+
+# ── Entrenamiento ────────────────────────────────────────────────────────────
+scikit-learn==1.5.1
+pandas==2.2.2
+matplotlib==3.8.4
+seaborn==0.13.1
+
+# ── Notebooks ────────────────────────────────────────────────────────────────
+jupyter>=1.0.0
+ipykernel>=6.0.0
