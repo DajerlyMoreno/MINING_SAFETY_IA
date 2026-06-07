@@ -8,7 +8,7 @@ Sistema de inteligencia artificial para monitoreo en tiempo real de condiciones 
 
 ```
 ┌──────────────────────────────────────────────┐
-│   Dashboard React + Vite  (puerto 5173)      │
+│   Dashboard React + Vite  (puerto 3000)      │
 │   • Gases en tiempo real + historial         │
 │   • Predicciones LSTM (90 min)               │
 │   • Mapa de riesgo por zona                  │
@@ -54,18 +54,18 @@ Sistema de inteligencia artificial para monitoreo en tiempo real de condiciones 
 | Agente Geomecanico | 8003 | Pendiente | Estabilidad estructural |
 | Monitor de Personal | 8004 | Pendiente | Localizacion de trabajadores |
 | Simulador | 8005 | OK | Generacion de datos de prueba |
-| Dashboard | 5173 | OK | Interfaz React en tiempo real |
+| Dashboard | 3000 | OK | Interfaz React en tiempo real |
 
 ---
 
 ## Requisitos del sistema
 
 - **Windows 10/11** (el sistema fue desarrollado y probado en Windows)
-- **Python 3.11** (versiones 3.12+ pueden tener conflictos con TF 2.15)
+- **Python 3.11** (versiones 3.12+ pueden tener conflictos con TensorFlow 2.15)
 - **Node.js 18+** con pnpm
 - **Git** (opcional, para clonar el repositorio)
 
-> **Importante:** No usar Python 3.12+ ni versiones de TensorFlow distintas a 2.15.0. Ver sección de dependencias críticas.
+> **Importante:** El sistema funciona **SIN TensorFlow en runtime**. La inferencia LSTM usa NumPy puro. TensorFlow solo se necesita para **reentrenar modelos** (ver `requirements-train.txt`).
 
 ---
 
@@ -104,20 +104,14 @@ Ejecuta `instalar_dependencias.bat` con doble clic. El script:
 - Instala las dependencias en el orden correcto
 - Verifica que todo quedo bien al finalizar
 
-**Opcion B — Manual:**
+**Opcion B — Manual (runtime sin TensorFlow):**
 
 ```cmd
 env\Scripts\activate
-
-:: Paso 1: fijar dependencias base de TF primero
-pip install numpy==1.26.4 protobuf==4.25.3 ml-dtypes==0.2.0 h5py==3.11.0
-
-:: Paso 2: instalar TensorFlow y tf-keras
-pip install tensorflow==2.15.0 tf-keras==2.15.0
-
-:: Paso 3: instalar el resto
 pip install -r requirements.txt
 ```
+
+> **Nota:** `requirements.txt` NO incluye TensorFlow. El sistema usa inferencia NumPy pura. Si necesitas reentrenar modelos, usa `requirements-train.txt` con Python 3.11.
 
 ### 4. Instalar dependencias del frontend
 
@@ -133,42 +127,53 @@ cd ..
 
 ```cmd
 env\Scripts\activate
-python -c "import tensorflow as tf; import tf_keras; import h5py; print('TF:', tf.__version__); print('tf_keras:', tf_keras.__version__); print('h5py:', h5py.__version__)"
+python -c "import h5py; import numpy as np; print('h5py:', h5py.__version__); print('numpy:', np.__version__)"
 ```
 
 Debe mostrar:
 ```
-TF: 2.15.0
-tf_keras: 2.15.0
 h5py: 3.11.0
+numpy: 1.26.4
 ```
+
+> **Nota:** TensorFlow NO se verifica aquí porque no se instala en runtime. Si necesitas reentrenar modelos, instala `requirements-train.txt` y verifica con `python -c "import tensorflow as tf; print('TF:', tf.__version__)"`
 
 ---
 
-## Dependencias criticas — versiones exactas
+## Dependencias criticas — runtime vs entrenamiento
 
-El sistema usa TensorFlow 2.15.0. Las siguientes versiones son **obligatorias** para evitar conflictos:
+El proyecto tiene **dos archivos de requirements** según el uso:
+
+### Runtime (`requirements.txt`) — Producción
+**NO incluye TensorFlow.** El sistema usa inferencia NumPy pura.
 
 | Paquete | Version | Razon |
 |---|---|---|
-| `tensorflow` | 2.15.0 | Version validada con los modelos |
-| `tf-keras` | 2.15.0 | Keras 2 legacy requerido (Keras 3 es incompatible) |
-| `numpy` | 1.26.4 | TF 2.15 no soporta NumPy 2.x |
-| `protobuf` | 4.25.3 | TF 2.15 requiere < 5.0.0 |
-| `ml-dtypes` | 0.2.0 | TF 2.15 requiere ~0.2.0 |
-| `h5py` | 3.11.0 | Lectura de pesos de modelos .keras |
+| `numpy` | 1.26.4 | Inferencia NumPy |
+| `h5py` | 3.11.0 | Lectura de pesos .keras |
+| `protobuf` | 4.25.3 | Dependencia de h5py |
+| `ml-dtypes` | 0.5.0 | Versión pre-compilada (no requiere compilación) |
 
-> **NO instalar** el paquete `keras` standalone. Desde la version 3.x es incompatible con TF 2.15 y rompe el entorno. Si ya esta instalado, ejecutar: `pip uninstall keras -y`
+### Entrenamiento (`requirements-train.txt`) — Reentrenar modelos
+**Solo para reentrenar modelos LSTM.** Requiere Python 3.11 EXCLUSIVAMENTE.
+
+| Paquete | Version | Razon |
+|---|---|---|
+| `tensorflow` | 2.15.0 | Versión validada con los modelos |
+| `tf-keras` | 2.15.0 | Keras 2 legacy (Keras 3 incompatible) |
+| `numpy` | 1.26.4 | TF 2.15 no soporta NumPy 2.x |
+| `ml-dtypes` | 0.2.0 | TF 2.15 requiere ~0.2.0 |
+
+> **NO instalar** el paquete `keras` standalone en producción. Desde la versión 3.x es incompatible con TF 2.15 y rompe el entorno. Si ya está instalado: `pip uninstall keras -y`
 
 ---
 
 ## Solucion de problemas de instalacion
 
-### Error: `No module named 'tensorflow.compat'`
-El paquete `keras` standalone (version 3.x) esta instalado y conflictua con TF 2.15.
+### Error: `No module named 'tensorflow'` (runtime)
+Esto es **normal** en runtime. El sistema no usa TensorFlow. Verifica con:
 ```cmd
-pip uninstall keras tensorflow-intel -y
-pip install tensorflow==2.15.0 tf-keras==2.15.0
+python -c "import h5py; import numpy as np; print('OK: h5py', h5py.__version__)"
 ```
 
 ### Error: `WinError 5 Acceso denegado`
@@ -177,19 +182,20 @@ El sistema esta corriendo y tiene archivos de Python bloqueados.
 2. Verificar en el Administrador de Tareas que no haya procesos `python.exe`
 3. Volver a intentar la instalacion
 
-### Error: `AttributeError: module 'tensorflow' has no attribute '__version__'`
-Instalacion de TF corrupta. Reinstalar limpio:
+### Error: `ml-dtypes` no instala (necesita compilación)
+Usa la versión pre-compilada:
 ```cmd
-pip uninstall tensorflow tensorflow-intel keras tf-keras protobuf ml-dtypes -y
-pip install numpy==1.26.4 protobuf==4.25.3 ml-dtypes==0.2.0
-pip install tensorflow==2.15.0 tf-keras==2.15.0
+pip install ml-dtypes==0.5.0
 ```
 
-### Error: `keras<2.16,>=2.15.0 required` al instalar
-El paquete `tensorflow-intel` entra en conflicto. Desinstalarlo:
+### Error: `google-genai` backtracking
+Versión fija para evitar conflictos:
 ```cmd
-pip uninstall tensorflow-intel -y
+pip install google-genai==1.7.0
 ```
+
+### Error: Puerto8000 en uso (Windows HTTP.SYS)
+El Orquestador usa puerto **8007** (no 8000) para evitar el conflicto con Windows HTTP.SYS. Si necesitas cambiar: editar `backend/shared/config.py`.
 
 ---
 
@@ -204,15 +210,15 @@ start_system.bat
 Esto abre ventanas separadas para cada componente:
 - Orquestador (puerto 8007)
 - Agente de Gases (puerto 8001)
-- Agente Imagenes (puerto 8002)
-- Agente Geomecanico (puerto 8003)
-- Monitor (puerto 8004)
+- Agente Imagenes (puerto 8002) — pendiente
+- Agente Geomecanico (puerto 8003) — pendiente
+- Monitor (puerto 8004) — pendiente
 - Simulador (puerto 8005)
-- Dashboard React (puerto 5173)
+- Dashboard React (puerto 3000)
 
 ### Usar el sistema
 
-1. Abrir el navegador en `http://localhost:5173`
+1. Abrir el navegador en `http://localhost:3000`
 2. Pulsar **▶ Iniciar Simulacion**
 3. Esperar ~2 minutos para que se acumule historial
 4. Explorar las tres pestanas:
@@ -256,11 +262,17 @@ proyecto_mineria_ia/
 │   │   ├── imagenes/       # Pendiente
 │   │   └── geomecanico/    # Pendiente
 │   ├── orquestador/
-│   │   └── app.py          # Orquestador central (puerto 8007)
+│   │   ├── app.py          # Orquestador central (puerto 8007)
+│   │   ├── communication_manager.py  # Circuit breaker
+│   │   └── orquestador.py
 │   ├── simulacion/
 │   │   └── simulador.py    # Simulador experto (puerto 8005)
 │   ├── rag/
 │   │   └── rag_engine.py
+│   ├── langgraph_flow/     # Flujo cíclico con memoria
+│   │   ├── grafo.py
+│   │   ├── nodos.py
+│   │   └── estado.py
 │   └── shared/
 │       ├── config.py
 │       ├── database.py     # Persistencia SQLite
@@ -282,14 +294,19 @@ proyecto_mineria_ia/
 │       ├── lstm_gases_Frente_B_Mongua.keras
 │       ├── lstm_gases_Galeria_Central.keras
 │       ├── lstm_gases_Bocamina.keras
-│       └── lstm_scalers_gases_nuevos.pkl
+│       ├── lstm_scalers_gases_nuevos.pkl
+│       └── isolation_forest.pkl
 ├── rag_data/
 │   ├── corpus_normativo.json
 │   └── faiss_index/
-├── requirements.txt
+├── requirements.txt         # Runtime (sin TF)
+├── requirements-train.txt   # Entrenamiento (con TF 2.15, Python 3.11)
 ├── instalar_dependencias.bat
 ├── start_system.bat
-└── stop_system.bat
+├── stop_system.bat
+├── _start_dev.ps1          # Helper para desarrollo
+├── ARCHITECTURE.md         # Documentación de arquitectura
+└── CONCEPTOS_ML.md         # Glosario de conceptos ML
 ```
 
 ---
@@ -325,8 +342,8 @@ proyecto_mineria_ia/
 
 | Zona | Perfil de riesgo |
 |---|---|
-| `Frente_A` | Alta actividad. CH4 y CO elevados. |
-| `Frente_B` | Frente activo secundario. |
+| `Frente_A_Sogamoso` | Alta actividad. CH4 y CO elevados. |
+| `Frente_B_Mongua` | Frente activo secundario. |
 | `Galeria_Central` | Zona de transito. Riesgo moderado. |
 | `Bocamina` | Entrada principal. Riesgo bajo. |
 
