@@ -95,4 +95,7 @@ tempCodeRunnerFile.py
 .abstra/
 .streamlit/secrets.toml
 
-DOCS/
+#DOCS/
+
+# ── Construcción del informe (paper IEEE) ───────────────────────
+#construccion-informe/

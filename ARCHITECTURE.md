@@ -17,16 +17,16 @@
                                     │ WebSocket broadcast
                                     │ HTTP REST
 ┌────────────────────────────────────┴─────────────────────────────────────┐
-│ ORQUESTADOR (Puerto 8007)                          │
-│  FastAPI — Punto de entrada central │
-│  ├── Coordina todos los agentes │
-│  ├── Correlaciona análisis de múltiples fuentes │
-│  ├── Integra LLM (Gemini) + RAG                                            │
-│  ├── Mantiene historial de eventos                                          │
-│  └── Broadcast a dashboard via WebSocket                                     │
+│ ORQUESTADOR (Puerto 8007)                                                │
+│  FastAPI — Punto de entrada central                                      │
+│  ├── Coordina todos los agentes                                          │
+│  ├── Correlaciona análisis de múltiples fuentes                          │
+│  ├── Integra LLM (Gemini) + RAG                                          │
+│  ├── Mantiene historial de eventos                                       │
+│  └── Broadcast a dashboard via WebSocket                                 │
 └─────────────────────────────────────────────────────────────────────────────┘
- │ │                           │
-          │ HTTP REST │ HTTP REST                │ HTTP REST
+          │                          │                                                       │
+          │ HTTP REST          │ HTTP REST                │ HTTP REST
           ▼                           ▼                           ▼
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
 │  AGENTE GASESES  │      │ AGENTE GEOMECÁNICO│ │ AGENTE IMÁGENES  │
