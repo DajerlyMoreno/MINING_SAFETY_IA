@@ -234,6 +234,124 @@ stop_system.bat
 
 ---
 
+## Evaluacion experimental del sistema
+
+El script `evaluacion_sistema.py` permite evaluar el rendimiento del sistema de forma automatizada sin necesidad del dashboard. Genera datos experimentales que se usan directamente en la seccion **Results and Discussion** del paper academico.
+
+### Requisitos previos
+
+1. El sistema debe estar corriendo con `start_system.bat`
+2. El entorno virtual debe estar activado: `env\Scripts\activate`
+
+### Ejecucion basica
+
+```cmd
+python evaluacion_sistema.py
+```
+
+Esto ejecutara **500 ciclos** por defecto y guardara los resultados en `evaluacion_resultados.csv`.
+
+### Modificar la cantidad de ciclos
+
+Editar la linea 28 del script:
+
+```python
+N_CICLOS = 500  # cambiar por el valor deseado
+```
+
+Ejemplo con 1000 ciclos:
+
+```python
+N_CICLOS = 1000
+```
+
+### Que hace el script
+
+1. Espera a que los servicios (Orquestador puerto 8007, Agente Gases puerto 8001) esten disponibles
+2. Ejecuta N ciclos alternando entre las 4 zonas mineras
+3. Por cada ciclo captura:
+   - Lectura real de gases (CH4, CO, CO2, O2, H2S)
+   - Predicciones LSTM (6 pasos = 90 minutos)
+   - Score y deteccion de Isolation Forest
+   - Nivel de riesgo clasificado
+4. Al finalizar imprime en consola:
+   - MAE y RMSE por gas
+   - Tasa de deteccion del Isolation Forest
+   - Distribucion de niveles de riesgo
+5. Guarda todos los datos crudos en `evaluacion_resultados.csv`
+
+### Salida esperada en consola
+
+```
+=== Evaluacion del Sistema — 500 ciclos ===
+Esperando servicios...
+Servicios listos. Comenzando evaluacion...
+
+  Progreso: 20/500 ciclos completados
+  ...
+  Progreso: 500/500 ciclos completados
+
+CSV guardado en: C:\...\evaluacion_resultados.csv
+
+==================================================
+METRICAS DE EVALUACION
+==================================================
+
+Ciclos evaluados: 500
+Alertas emitidas (EMERGENCIA/EVACUACION): 0 (0.0%)
+Detecciones Isolation Forest: 368 (73.6%)
+
+--- Error de Prediccion LSTM (MAE / RMSE) ---
+  CH4: MAE=0.1248, RMSE=0.1787 (n=500)
+  CO: MAE=4.2653, RMSE=6.1083 (n=500)
+  CO2: MAE=0.0882, RMSE=0.1320 (n=500)
+  O2: MAE=0.3148, RMSE=0.4014 (n=500)
+  H2S: MAE=0.4703, RMSE=0.5173 (n=500)
+
+--- Isolation Forest ---
+  Score promedio: 0.6318
+  Score maximo: 0.7035
+  Score minimo: 0.5992
+  Detecciones activas: 368/500 (73.6%)
+
+--- Distribucion de Niveles ---
+  PRECAUCION: 310 (62.0%)
+  SEGURO: 190 (38.0%)
+```
+
+### Archivo de resultados
+
+`evaluacion_resultados.csv` contiene una fila por ciclo con las columnas:
+
+| Columna | Descripcion |
+|---|---|
+| `ciclo` | Numero del ciclo |
+| `zona` | Zona minera evaluada |
+| `timestamp` | Fecha y hora del ciclo |
+| `nivel_clasificado` | SEGURO / PRECAUCION / RIESGO ALTO / EMERGENCIA / EVACUACION |
+| `es_alerta` | True si el nivel es EMERGENCIA o EVACUACION |
+| `if_score` | Score de anomalía del Isolation Forest |
+| `if_detectado` | True si se detecto anomalia |
+| `if_tipo` | Tipo: patron_multivariado / patron_incendio / incremento_brusco |
+| `real_CH4`, `real_CO`, ... | Valores reales de cada gas |
+| `pred_CH4_p1` a `pred_CH4_p6` | Predicciones LSTM (15 a 90 min) por gas |
+
+### Generar graficos para el paper
+
+Despues de ejecutar la evaluacion, se pueden generar los graficos en ingles con:
+
+```cmd
+python generar_graficos_results.py
+```
+
+Esto crea 3 imagenes PNG en `construccion-informe/images/`:
+
+- `lstm_error_bar.png` — MAE y RMSE por gas
+- `niveles_riesgo_pie.png` — Distribucion de niveles de riesgo
+- `tipos_anomalia_bar.png` — Tipos de anomalias detectadas
+
+---
+
 ## Variables de entorno (`.env`)
 
 Crear archivo `.env` en la raiz del proyecto (opcional, el sistema usa valores por defecto):

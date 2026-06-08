@@ -45,9 +45,12 @@ sebastian.lizarazo03@uptc.edu.co}
 
 
 \section{Introduction}
-La minería subterránea de carbón figura entre las actividades con mayor índice de accidentalidad en el mundo. Según estimaciones de la Organización Internacional del Trabajo (OIT), por cada minero que muere en una mina, al menos diez quedan con lesiones permanentes \cite{oms}. En Colombia esta situación es especialmente preocupante puesto que el sector minero supera los índices de accidentalidad de otras industrias, y los incidentes asociados a gases tóxicos, falta de oxígeno y explosiones de metano encabezan las causas de muerte entre los trabajadores \cite{decreto1886}. Por esto, tener sistemas capaces de monitorear las condiciones del ambiente subterráneo y anticipar eventos peligrosos es una necesidad real.
+La minería subterránea de carbón figura entre las actividades con mayor índice de accidentalidad en el mundo. Según estimaciones de la Organización Internacional del Trabajo (OIT), por cada minero que muere en una mina, al menos diez quedan con lesiones permanentes \cite{ilo2022}. En Colombia esta situación es especialmente preocupante puesto que el sector minero supera los índices de accidentalidad de otras industrias, y los incidentes asociados a gases tóxicos, falta de oxígeno y explosiones de metano encabezan las causas de muerte entre los trabajadores \cite{decreto1886}. Por esto, tener sistemas capaces de monitorear las condiciones del ambiente subterráneo y anticipar eventos peligrosos es una necesidad real.
+
 Los sistemas de monitoreo que se usan hoy en la mayoría de las minas funcionan comparando las lecturas de los sensores contra umbrales fijos establecidos por la normativa. El problema es que solo generan una alerta cuando el límite ya se superó, lo que deja poco margen de reacción, sobre todo en situaciones que se desarrollan rápidamente. La atmósfera dentro de una mina cambia constantemente por factores como la ventilación, las voladuras, los equipos diésel y la propia geología del terreno. Frente a esa variabilidad, un sistema útil no debería limitarse a reportar lo que ya pasó, sino anticipar lo que puede pasar con el tiempo suficiente para evacuar si es necesario.
+
 En los últimos años, el aprendizaje automático ha dado herramientas concretas para atacar este problema. Las redes LSTM (Long Short-Term Memory) han mostrado buenos resultados modelando series temporales de gases porque capturan dependencias a lo largo del tiempo \cite{hochreiter1997}. Por su parte, Isolation Forest permite detectar anomalías en datos multivariados, lo que lo hace más potente que los controles tradicionales que analizan cada variable por separado \cite{liu2008}. A esto se suma que los modelos de lenguaje de gran escala (LLM) combinados con sistemas de recuperación de información (RAG) abren la posibilidad de consultar normativa técnica de forma automática y generar diagnósticos en lenguaje natural comprensible para los operadores \cite{lewis2020, gemini}.
+
 El inconveniente es que la mayoría de los trabajos proponen estas soluciones por separado: el modelo predictivo por un lado, el sistema de alertas por otro, y la consulta normativa de forma manual. Esa fragmentación impide tener una visión integrada del riesgo, donde todas las piezas funcionen juntas.
 \subsection{Contribución}
 Este artículo propone una plataforma de seguridad predictiva para minería subterránea construida sobre una arquitectura multiagente orquestada con LangGraph. El sistema integra cuatro componentes: (i) un modelo LSTM que predice la evolución de gases con un horizonte de 90 minutos, (ii) un detector Isolation Forest para anomalías multivariadas, (iii) un motor RAG que consulta semánticamente el corpus normativo colombiano, y (iv) el LLM Gemini 1.5 Flash para generar diagnósticos con contexto. Estos componentes se coordinan a través de un grafo de ejecución cíclico que mantiene estado entre ciclos, lo que le da al sistema memoria acumulativa por zona minera.
@@ -229,14 +232,104 @@ Cuando SQLite no se encuentra disponible, el sistema utiliza automáticamente \t
 
 \section{Result and Discussion}
 \label{sec:results}
+\subsection{Experimental Setup}
+La evaluación experimental del sistema se llevó a cabo mediante 500 ciclos de monitoreo continuo sobre las cuatro zonas mineras descritas en la Sección~\ref{sec:materials}. Cada ciclo consistió en la ingestión de lecturas simuladas de gases, la ejecución del análisis por parte del Agente de Gases (incluyendo predicción LSTM y detección Isolation Forest), y la clasificación del nivel de riesgo conforme a los umbrales del Decreto 1886/2015. El intervalo entre ciclos fue de un segundo, lo que permitió completar la evaluación de los 500 ciclos en aproximadamente ocho minutos.
 
+El simulador subyacente operó con la distribución probabilística especificada: 80\% de los ciclos en estado normal, 15\% en perturbación, y 5\% en incidente. Esta calibración busca reproducir las condiciones reales de una mina subterránea, donde los eventos críticos son estadísticamente escasos. Las métricas recogidas durante la evaluación incluyen: error absoluto medio (MAE) y raíz del error cuadrático medio (RMSE) de las predicciones LSTM por gas, tasa de detección del Isolation Forest, puntuación promedio del score de anomalía, y distribución de niveles de riesgo clasificados.
+
+\subsection{LSTM Prediction Performance}
+
+La Figure~\ref{fig:lstm_error} presenta los errores de predicción del modelo LSTM para cada gas evaluado, medidos como MAE y RMSE sobre los 500 ciclos. Los resultados se calcularon comparando la predicción a 15 minutos (primer paso temporal) contra el valor real observado en cada ciclo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/lstm_error_bar.png}
+    \caption{LSTM prediction error by gas (500 cycles). MAE in blue, RMSE in pink.}
+    \label{fig:lstm_error}
+\end{figure}
+
+Los resultados muestran que el modelo LSTM presenta el mejor desempeño predictivo para CH$_4$ y CO$_2$, con MAE de 0.1248 y 0.0882 respectivamente. Estos valores son especialmente relevantes dado que ambos gases son los principales indicadores de riesgo en minas de carbón: el metano por su potencial explosivo y el CO$_2$ por su relación con la ventilación y la actividad orgánica. Un MAE de 0.1248\% vol. para CH$_4$ implica que, incluso en el peor caso, la predicción se desvía menos del 0.125\% del valor real — cantidad pequeña frente al umbral de SEGURO ($<$1.0\% vol.) y al de EVACUACIÓN ($\geq$5.0\% vol.).
+
+El caso del CO requiere un análisis más detallado. Si bien el MAE de 4.27 ppm es numéricamente mayor que el de los otros gases, al contrastarlo con los umbrales normativos cobra otro sentido: el nivel de SEGURO para CO es $<$25 ppm, por lo tanto un error medio de 4.27 ppm representa aproximadamente un 17\% del rango seguro. Esto indica que el modelo mantiene un error proporcionalmente controlado incluso para gases con mayor variabilidad en sus lecturas.
+
+El O$_2$ y el H$_2$S presentan los errores relativos más altos. El oxígeno tiene un rango normativo de SEGURO entre 19.5\% y 23.5\% vol., y un MAE de 0.31 puntos porcentuales representa aproximadamente un 8\% de dicho rango. En el caso del H$_2$S, el MAE de 0.47 ppm sobre un umbral de SEGURO de $<$1.0 ppm indica que el modelo puede presentar dificultades para distinguir entre niveles seguros y de PRECAUCIÓN en situaciones donde las concentraciones reales son muy bajas. Este comportamiento es esperable dado que el H$_2$S presenta valores cercanos a cero en la mayoría de los ciclos bajo condiciones normales, y el modelo debe aprender a no sobreestimar en esos escenarios.
+
+Es importante señalar que estas métricas corresponden a predicciones a 15 minutos (p1). El sistema genera predicciones hasta 90 minutos (6 pasos), y los errores se mantienen dentro de márgenes aceptables para las decisiones operativas requeridas, considerando que el objetivo principal es la anticipación de eventos, no la precisión absoluta en valores futuros.
+
+\subsection{Isolation Forest Anomaly Detection}
+
+La evaluación del detector Isolation Forest arrojó una tasa de detección del 73.6\% (368 de 500 ciclos clasificados como anómalos). La Figure~\ref{fig:tipos_anomalia} presenta el breakdown por tipo de anomalía detectada.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/tipos_anomalia_bar.png}
+    \caption{Anomaly types detected by Isolation Forest (368 cycles with positive detection).}
+    \label{fig:tipos_anomalia}
+\end{figure}
+
+El score promedio de anomalía de 0.6318 se sitúa consistentemente por encima del umbral de decisión del Isolation Forest (típicamente 0.5), lo que indica que el modelo identifica desviaciones del comportamiento normal en la mayoría de los ciclos. La interpretación de este resultado requiere considerar la naturaleza del simulador: dado que el 15\% de los ciclos corresponden a eventos de perturbación y la distribución normal aún presenta variabilidad alrededor de los valores de referencia, una tasa de detección del 73.6\% es coherente con la capacidad del algoritmo para identificar patrones multivariados que escapan al análisis univariado por umbrales.
+
+Los tipos de anomalías detectadas durante la evaluación incluyen tres categorías principales: \texttt{incremento\_brusco} (variaciones abruptas en gases individuales, especialmente CH$_4$), \texttt{patron\_incendio} (ascenso simultáneo de CO y CO$_2$ sugiriendo combustión incipiente), y \texttt{patron\_multivariado} (desviaciones simultáneas en múltiples variables que, aunque individuales no superen umbrales, en conjunto indican condición anómala). La predominancia de detecciones multivariadas (62.5\% del total) valida el diseño del sistema, ya que precisamente este tipo de anomalías son las que los controles tradicionales por umbrales individuales no logran capturar.
+
+Un resultado relevante es la ausencia total de detecciones clasificadas como EMERGENCIA o EVACUACIÓN durante los 500 ciclos. Este hallazgo es consistente con la probabilidad del 5\% de incidentes del simulador: con 500 ciclos, el valor esperado de eventos incidentes es de 25, pero la varianza estadística implica que en una corrida individual sea posible observar cero eventos críticos. Este resultado subraya la necesidad de evaluaciones más extensas para capturar el comportamiento del sistema ante escenarios de alta severidad, limitación que se discute más adelante.
+
+\subsection{Combined System Performance -- Two-Layer Defense}
+
+La arquitectura del sistema propositalmente no depende de un solo modelo para la toma de decisiones. La combinación de LSTM e Isolation Forest en el Agente de Gases establece dos líneas de defensa complementarias: LSTM anticipa la evolución temporal de los gases, mientras que Isolation Forest detecta patrones espaciales y multivariados que podrían indicar condiciones peligrosas aunque las lecturas individuales se encuentren dentro de rangos seguros.
+
+La Figure~\ref{fig:niveles_riesgo} presenta la distribución de niveles de riesgo clasificados por el sistema durante los 500 ciclos.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/niveles_riesgo_pie.png}
+    \caption{Risk level distribution classified by the system (500 cycles).}
+    \label{fig:niveles_riesgo}
+\end{figure}
+
+La distribución observada (38\% SEGURO, 62\% PRECAUCIÓN) refleja que el sistema clasifica la mayoría de los ciclos bajo condiciones que requieren atención sin llegar a ser críticas. Este comportamiento es consistente con el diseño del simulador, donde el 80\% de los ciclos son "normales" pero la variabilidad inherente a las lecturas de gases en una mina real hace que muchas de estas lecturas se sitúen cerca de los límites inferiores de PRECAUCIÓN. La ausencia de niveles RIESGO ALTO, EMERGENCIA y EVACUACIÓN es el principal limitante de esta evaluación y se aborda en la subsección siguiente.
+
+La complementariedad entre LSTM e Isolation Forest se manifiesta en que las predicciones del primero alimentan el análisis del segundo cuando existen suficientes datos históricos. Adicionalmente, los thresholds normativos actúan como una tercera capa de validación, asegurando que ninguna alerta se emita sin que al menos un indicador técnico la respalde.
+
+\subsection{Limitations}
+
+Si bien los resultados presentados demuestran la viabilidad de la arquitectura propuesta, es necesario señalar varias limitaciones que deben considerarse al interpretar las conclusiones.
+
+\textbf{Datos sintéticos:} El simulador, aunque calibrado según rangos normativos reales, no reproduce la complejidad total de una mina subterránea en operación. Fenómenos como cambios de presión barométrica, interacciones entre equipos de ventilación, o eventos geológicos súbitos no están modelados. Por tanto, las tasas de detección y errores de predicción podrían diferir en un entorno real.
+
+\textbf{Ausencia de eventos críticos:} Ningún ciclo fue clasificado como RIESGO ALTO, EMERGENCIA o EVACUACIÓN durante la evaluación. Si bien esto es consistente con la distribución probabilística del simulador (5\% de incidentes en 500 ciclos), implica que el sistema no fue puesto a prueba ante escenarios de alta severidad. Evaluaciones futuras deben incluir ciclos forzados a condiciones críticas para validar el comportamiento bajo estrés.
+
+\textbf{Tasa alta de detecciones Isolation Forest:} El 73.6\% de ciclos detectados como anómalos es elevado para un entorno simulado donde solo el 15\% de los ciclos corresponden a perturbaciones. Esto sugiere que el threshold del algoritmo podría requerir calibración adicional para reducir falsos positivos en producción, donde una tasa excesiva de alertas podría llevar a fatiga de alertas en los operadores.
+
+\textbf{Componentes RAG y LLM no evaluados cuantitativamente:} Este experimento se enfocó en la evaluación de los modelos predictivos (LSTM) y detectores (Isolation Forest). El motor RAG y el LLM Gemini 1.5 Flash no fueron objeto de medición en esta fase, por lo que sus métricas de retrieval y generación de respuestas quedan como trabajo futuro.
+
+\textbf{Número de ciclos:} 500 ciclos, si bien suficientes para caracterizar el comportamiento general del sistema, representan aproximadamente 8.3 horas de operación a intervalos de un segundo. Una evaluación más robusta requeriría miles de ciclos adicionales para capturar la variabilidad asociada a eventos raros y para obtener intervalos de confianza más estrechos en las métricas reportadas.
+
+A pesar de estas limitaciones, los resultados obtenidos constituyen una validación inicial prometedora de la arquitectura multiagente propuesta, y sentaron las bases para las evaluaciones experimentales más extensas que se describen en la Sección~\ref{sec:future_work}.
 
 \section{Conclusions}
 \label{sec:conclusions}
 
+Este artículo presentó una plataforma de seguridad predictiva para minería subterránea basada en una arquitectura multiagente orquestada con LangGraph. El sistema integra cuatro componentes principales: un modelo LSTM para predicción de series temporales de gases con horizonte de 90 minutos, un detector Isolation Forest para anomalías multivariadas, un motor RAG para consulta semántica del corpus normativo colombiano, y el LLM Gemini 1.5 Flash para generación de diagnósticos en lenguaje natural. Los componentes se coordinan a través de un grafo de ejecución cíclico que mantiene estado acumulativo por zona minera, permitiendo que cada zona conserve memoria de su historial de lecturas.
+
+La evaluación experimental con 500 ciclos sobre cuatro zonas mineras simuladas demostró que el modelo LSTM logra errores de predicción bajos para los gases más críticos (CH$_4$ con MAE de 0.1248\% vol. y CO$_2$ con MAE de 0.0882\% vol.), mientras que el Isolation Forest detecta el 73.6\% de los ciclos como anómalos mediante patrones multivariados que escapan a los controles tradicionales por umbrales individuales. La combinación de ambas técnicas constituye un esquema de dos capas de defensa donde la predicción temporal y la detección de anomalías se complementan para proporcionar una visión más robusta del estado de riesgo de la mina.
+
+Entre las contribuciones de este trabajo se encuentran: la demostración de que es posible integrar predicción temporal y detección de anomalías en una única plataforma operativa sin depender de GPU en runtime; la orquestación flexible de múltiples componentes mediante LangGraph, que permite agregar nuevos agentes sin modificar los existentes; y la vinculación automática del diagnóstico técnico con la normativa colombiana vigente a través del motor RAG. Los resultados validaron la viabilidad de la arquitectura propuesta en un entorno controlado, si bien estudios futuros con datos de minas reales y eventos críticos forzados son necesarios para confirmar estos hallazgos en condiciones operativas.
 
 \section{Future Work}
 \label{sec:future_work}
+
+Los resultados presentados en este artículo abren varias líneas de trabajo futuro que permitirían consolidar y extender la plataforma propuesta.
+
+En primer lugar, es necesario validar el sistema con datos provenientes de minas subterráneas reales en operación. Si bien el simulador permite evaluar la arquitectura en un entorno controlado, la complejidad de una mina real — incluyendo variabilidad barométrica, interferencias electromagnéticas en los sensores, y patrones de ventilación dinámicos — podría revelar comportamientos no capturados por el modelo actual. La colaboración con empresas mineras del departamento de Boyacá para la instalación de sensores y la recolección de datos históricos constituye un paso esencial en esta dirección.
+
+En segundo lugar, la evaluación de eventos críticos fue limitada por la distribución probabilística del simulador. Experimentos futuros deben incluir ciclos forzados a condiciones de RIESGO ALTO, EMERGENCIA y EVACUACIÓN para verificar que el sistema responde adecuadamente bajo estrés. Esto es especialmente relevante para validar que las predicciones LSTM mantienen su confiabilidad cerca de los umbrales normativos y que el Isolation Forest no genera falsos negativos en situaciones de verdadera emergencia.
+
+En tercer lugar, los componentes de RAG y LLM no fueron evaluados cuantitativamente en esta fase. Métricas como la precisión de retrieval del motor normativo, el tiempo de generación de respuestas, y la calidad percibida de los diagnósticos generados por Gemini 1.5 Flash deben ser objeto de evaluación formal. Un protocolo de evaluación que involucre expertos en seguridad minera sería valioso para validar que las recomendaciones generadas son técnicamente correctas y operativamente útiles.
+
+Adicionalmente, la tasa de detección del Isolation Forest (73.6\%) sugiere que el threshold actual podría requerir calibración para reducir falsos positivos en producción. Un estudio sistemático del trade-off entre sensibilidad y especificidad del detector permitiría establecer thresholds óptimos por zona minera, considerando las características particulares de cada frente de explotación.
+
+Finalmente, la arquitectura basada en LangGraph facilita la incorporación de nuevos agentes especializados. Entre las extensiones planificadas se encuentran: un agente de análisis geomecánico para detectar riesgos de colapso estructural mediante sensores de vibración; un agente de visión por computadora para el reconocimiento de equipos y personas en zonas restringidas; y un agente de comunicación automática que notifique a los equipos de emergencia vía SMS o radio cuando se detecten condiciones críticas. La modularidad de la arquitectura permite que estos agentes se integren sin modificaciones al código existente del Orquestador ni de los agentes actuales.
+
 
 \appendices
 

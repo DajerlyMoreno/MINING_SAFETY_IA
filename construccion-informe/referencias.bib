@@ -1,32 +1,32 @@
 % ─────────────────────────────────────────────────────────────────────────────
 % REFERENCIAS BIBLIOGRÁFICAS — MINING_SAFETY_IA
-% Formato: IEEEtran (APA-like para IEEE)
+% Formato: IEEEtran (Optimizadas y Verificadas)
 % ─────────────────────────────────────────────────────────────────────────────
 
 % ── Normativa Colombiana ────────────────────────────────────────────────────
 @misc{decreto1886,
- author    = {Ministerio de Minas y Energía de Colombia},
+  author    = {Ministerio de Minas y Energía de Colombia},
   title     = {Decreto 1886 de 2015: Reglamento de Seguridad en las Labores Mineras Subterráneas},
   year      = {2015},
   address   = {Bogotá, Colombia},
   note      = {Diario Oficial No. 49.609},
-  url       = {https://www.minenergia.gov.co/documents/10180/24301/Decreto+1886+de+2015.pdf},
+  url       = {https://www.suin-juriscol.gov.co/viewDocument.asp?id=1268685},
   urldate   = {2026-01-01}
 }
 
 @misc{resolucion90708,
   author    = {Ministerio de Minas y Energía de Colombia},
-  title     = {Resolución 90708 de 2013: Reglamento Técnico de Instalaciones Eléctricas},
+  title     = {Resolución 90708 de 2013: Reglamento Técnico de Instalaciones Eléctricas (RETIE)},
   year      = {2013},
   address   = {Bogotá, Colombia},
-  note      = {Reglamento RETIE},
-  url       = {https://www.minenergia.gov.co/documents/10180/24301/Resolucion+90708+2013.pdf},
+  note      = {Anexo General del Reglamento Técnico de Instalaciones Eléctricas},
+  url       = {https://www.minenergia.gov.co/reglamentos-tecnicos1},
   urldate   = {2026-01-01}
 }
 
 % ── Estándares Internacionales de Seguridad Minera ─────────────────────────
 @misc{osha146,
-  author = {{Occupational Safety and Health Administration (OSHA)}},
+  author    = {{Occupational Safety and Health Administration (OSHA)}},
   title     = {29 CFR 1910.146: Permit-Required Confined Spaces},
   year      = {1998},
   address   = {Washington, DC, USA},
@@ -41,7 +41,7 @@
   year      = {2021},
   address   = {Arlington, VA, USA},
   publisher = {U.S. Department of Labor},
-  url       = {https://www.msha.gov/regulations/standards/30-cfr-part-57},
+  url       = {https://www.ecfr.gov/current/title-30/chapter-I/subchapter-K/part-57},
   urldate   = {2026-01-01}
 }
 
@@ -51,7 +51,7 @@
   year      = {2024},
   address   = {Cincinnati, OH, USA},
   publisher = {CDC/NIOSH},
-  url       = {https://www.cdc.gov/niosh/idlh/idlhinfo.html},
+  url       = {https://www.cdc.gov/niosh/idlh/},
   urldate   = {2026-01-01}
 }
 
@@ -66,7 +66,7 @@
 
 % ── LSTM — Long Short-Term Memory ─────────────────────────────────────────────
 @article{hochreiter1997,
-  author    = {Hochreiter, Sepp and Schmidhuber, Jürgen},
+  author    = {Hochreiter, Sepp and Schmidhuber, J{\"u}rgen},
   title     = {Long Short-Term Memory},
   journal   = {Neural Computation},
   year      = {1997},
@@ -92,7 +92,7 @@
 
 % ── RAG — Retrieval-Augmented Generation ───────────────────────────────────
 @article{lewis2020,
-  author    = {Lewis, Patrick and Perez, Ethan and Piktus, Aleksandra and Petroni, Fabio and Karpukhin, Vladimir and Goyal, Naman and Küttler, Heinrich and Lewis, Mike and tau, Yihong and Rocktäschel, Tim and Riedel, Sebastian and Choi, Douwe},
+  author    = {Lewis, Patrick and Perez, Ethan and Piktus, Aleksandra and Petroni, Fabio and Karpukhin, Vladimir and Goyal, Naman and K{\"{u}}ttler, Heinrich and Lewis, Mike and Yih, Wen-tau and Rockt{\"{a}}schel, Tim and Riedel, Sebastian and Kiela, Douwe},
   title     = {Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks},
   journal   = {Advances in Neural Information Processing Systems (NeurIPS)},
   year      = {2020},
@@ -100,42 +100,38 @@
   pages     = {9459--9474},
   address   = {Red Hook, NY, USA},
   publisher = {Curran Associates, Inc.},
-  url       = {https://arxiv.org/abs/2005.11401},
-  note      = {Facebook AI Research}
+  url       = {https://arxiv.org/abs/2005.11401}
 }
 
 % ── FAISS — Facebook AI Similarity Search ────────────────────────────────────
 @article{johnson2019,
-  author    = {Johnson, Jeff and Dou, Matthijs and Courville, Trevor and Kautz, Jeff},
+  author    = {Johnson, Jeff and Douze, Matthijs and J{\'e}gou, Herv{\'e}},
   title     = {Billion-Scale Similarity Search with GPUs},
   journal   = {IEEE Transactions on Big Data},
   year      = {2019},
   volume    = {7},
   number    = {3},
   pages     = {535--547},
-  address   = {Los Alamitos, CA, USA},
-  publisher = {IEEE Computer Society},
-  doi       = {10.1109/TBD.2019.2902923},
-  note      = {Facebook AI Research}
+  publisher = {IEEE},
+  doi       = {10.1109/TBD.2019.2921572}
 }
 
 % ── LangGraph ───────────────────────────────────────────────────────────────
 @misc{langgraph,
-  author    = {{LangChain}},
+  author    = {{LangChain AI}},
   title     = {LangGraph: Multi-agent orchestration with cyclic workflows},
   year      = {2024},
   address   = {San Francisco, CA, USA},
-  url       = {https://python.langchain.com/docs/langgraph},
+  url       = {https://langchain-ai.github.io/langgraph/},
   urldate   = {2026-01-01}
 }
 
 % ── Keras 3 ────────────────────────────────────────────────────────────────
 @misc{keras,
-  author    = {{Google AI}},
-  title     = {Keras 3.13.2 Documentation},
+  author    = {{Keras Team}},
+  title     = {Keras 3 documentation},
   year      = {2024},
-  address   = {Mountain View, CA, USA},
-  url       = {https://keras.io/3.13/},
+  url       = {https://keras.io/},
   urldate   = {2026-01-01}
 }
 
@@ -145,15 +141,15 @@
   title     = {Gemini API Documentation},
   year      = {2024},
   address   = {Mountain View, CA, USA},
-  url       = {https://ai.google.dev/api/gemini},
+  url       = {https://ai.google.dev/gemini-api/docs},
   urldate   = {2026-01-01}
 }
 
 % ── Arquitectura Multiagente ────────────────────────────────────────────────
-@inproceedings{wooldridge1995,
+@article{wooldridge1995,
   author    = {Wooldridge, Michael and Jennings, Nicholas R.},
   title     = {Intelligent Agents: Theory and Practice},
-  booktitle = {The Knowledge Engineering Review},
+  journal   = {The Knowledge Engineering Review},
   year      = {1995},
   volume    = {10},
   number    = {2},
@@ -164,13 +160,13 @@
 }
 
 % ── Minería Subterránea — Contexto y Problemática ───────────────────────────
-@misc{oms,
+@misc{ilo2022,
   author    = {{International Labour Organization (ILO)}},
   title     = {Safety and Health in Mines: The ILO Global Estimates of Occupational Accidents and Diseases},
   year      = {2022},
   address   = {Geneva, Switzerland},
   publisher = {ILO},
-  url       = {https://www.ilo.org/global/topics/safety-and-health-at-work/resources-library/safety-and-health-in-mines/lang--en/index.htm},
+  url       = {https://www.ilo.org/topics/safety-and-health-work},
   urldate   = {2026-01-01}
 }
 
@@ -180,18 +176,18 @@
   year      = {2018},
   address   = {Bogotá, Colombia},
   publisher = {SGC},
-  url       = {https://www.sgc.gov.co/Recursos/Geologia-y-recursos-minerales-de-Boyaca-7692.aspx},
+  url       = {https://www.sgc.gov.co},
   urldate   = {2026-01-01}
 }
 
 % ── Keras / TensorFlow ─────────────────────────────────────────────────────
 @misc{chollet2015,
-  author    = {Chollet, François},
+  author    = {Chollet, Fran{\c{c}}ois},
   title     = {Keras: Deep Learning Library for Theano and TensorFlow},
   year      = {2015},
   address   = {San Francisco, CA, USA},
-  url       = {https://keras.io},
-  note      = {GitHub: fchollet/keras}
+  url       = {https://github.com/fchollet/keras},
+  note      = {GitHub Repository}
 }
 
 % ── Simulación de Gases en Minas ───────────────────────────────────────────
@@ -206,13 +202,13 @@
   doi       = {10.1016/j.psep.2021.01.028}
 }
 
-% ── Fallback y Resiliencia en Sistemas ML ────────────────────────────────────
-@article{carter2016,
-  author    = {Carter, Barry and Cheetham, Mark and Hinkle, Alan and Surtani, Prashant and others},
-  title     = {Observations on the Failure of Neural Networks for Safety-Critical Applications},
-  journal   = {arXiv preprint arXiv:1610.01173},
+% ── Fallback y Resiliencia en Sistemas ML (REEMPLAZO REAL VERIFICADO) ───────
+@article{amodei2016,
+  author    = {Amodei, Dario and Olah, Chris and Steinhardt, Jacob and Christiano, Paul and Schulman, John and Man{\'e}, Dan},
+  title     = {Concrete Problems in AI Safety},
+  journal   = {arXiv preprint arXiv:1606.06565},
   year      = {2016},
   address   = {Ithaca, NY, USA},
   publisher = {Cornell University Library},
-  url       = {https://arxiv.org/abs/1610.01173}
+  url       = {https://arxiv.org/abs/1606.06565}
 }

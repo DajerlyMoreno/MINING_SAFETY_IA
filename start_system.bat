@@ -6,7 +6,7 @@ REM start_system.bat
 REM Sistema Multiagente Mineria Subterranea IA - UPTC 2026
 REM
 REM Servicios:
-REM   8000 - Orquestador Central (LangGraph + LLM + RAG)
+REM   8007 - Orquestador Central (LangGraph + LLM + RAG)
 REM   8001 - Agente de Gases     (LSTM + IsolationForest)
 REM   8002 - Agente de Imagenes  (vision artificial)
 REM   8003 - Agente Geomecanico  (extensometros / convergimetros)
@@ -40,7 +40,7 @@ echo   SISTEMA MULTIAGENTE MINERIA IA - UPTC 2026
 echo ==========================================================
 echo   Puerto  Servicio
 echo   ------  -----------------------------------------
-echo   8000    Orquestador Central (LangGraph + LLM)
+echo   8007    Orquestador Central (LangGraph + LLM)
 echo   8001    Agente Gases        (LSTM)
 echo   8002    Agente Imagenes
 echo   8003    Agente Geomecanico
@@ -136,7 +136,7 @@ echo     OK Bot WhatsApp       :8006
 
 start "Orquestador :8007" /d "%ROOT%" cmd /k "call env\Scripts\activate.bat && uvicorn backend.orquestador.app:app --host 127.0.0.1 --port 8007 --log-level info"
 timeout /t 6 /nobreak >nul
-echo     OK Orquestador        :8000
+echo     OK Orquestador        :8007
 
 start "Simulador :8005" /d "%ROOT%" cmd /k "call env\Scripts\activate.bat && uvicorn backend.simulacion.simulador:sim_app --host 127.0.0.1 --port 8005 --log-level warning"
 timeout /t 3 /nobreak >nul
